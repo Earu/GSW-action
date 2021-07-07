@@ -116,12 +116,12 @@ function validateMetadata(metadata) {
 		throw new Error("missing property 'ignore' in addon.json");
 	}
 
-	if (!TYPES.find(metadata.type)) {
+	if (!TYPES.find(t => t === metadata.type)) {
 		throw new Error(`invalid type: ${metadata.type}`);
 	}
 
 	for (const tag of metadata.tags) {
-		if (!TAGS.find(tag)) {
+		if (!TAGS.find(t => t === tag)) {
 			throw new Error(`invalid tag: ${tag}`);
 		}
 	}
@@ -236,5 +236,4 @@ try {
 	setOutput("error-code", 0);
 } catch (error) {
 	setFailed(error.message);
-	setOutput("error-code", 1);
 }
