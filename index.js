@@ -1,6 +1,6 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
-//const greenworks = require("greenworks");
+
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
@@ -12,9 +12,9 @@ const VERSION = "3";
 const TYPES = [ "gamemode", "map", "weapon", "vehicle", "npc", "entity", "tool", "effects", "model", "servercontent" ];
 const TAGS = [ "fun", "roleplay", "scenic", "movie", "realism", "cartoon", "water", "comic", "build" ];
 const WILDCARDS = [
-	"lua/*.lua",
-	"scenes/*.vcd",
-	"particles/*.pcf",
+	"lua/**/*.lua",
+	"scenes/**/*.vcd",
+	"particles/**/*.pcf",
 	"resource/fonts/*.ttf",
 	"scripts/vehicles/*.txt",
 	"resource/localization/*/*.properties",
@@ -22,42 +22,42 @@ const WILDCARDS = [
 	"maps/*.nav",
 	"maps/*.ain",
 	"maps/thumb/*.png",
-	"sound/*.wav",
-	"sound/*.mp3",
-	"sound/*.ogg",
-	"materials/*.vmt",
-	"materials/*.vtf",
-	"materials/*.png",
-	"materials/*.jpg",
-	"materials/*.jpeg",
-	"models/*.mdl",
-	"models/*.vtx",
-	"models/*.phy",
-	"models/*.ani",
-	"models/*.vvd",
+	"sound/**/*.wav",
+	"sound/**/*.mp3",
+	"sound/**/*.ogg",
+	"materials/**/*.vmt",
+	"materials/**/*.vtf",
+	"materials/**/*.png",
+	"materials/**/*.jpg",
+	"materials/**/*.jpeg",
+	"models/**/*.mdl",
+	"models/**/*.vtx",
+	"models/**/*.phy",
+	"models/**/*.ani",
+	"models/**/*.vvd",
 	"gamemodes/*/*.txt",
 	"gamemodes/*/*.fgd",
 	"gamemodes/*/logo.png",
 	"gamemodes/*/icon24.png",
-	"gamemodes/*/gamemode/*.lua",
-	"gamemodes/*/entities/effects/*.lua",
-	"gamemodes/*/entities/weapons/*.lua",
-	"gamemodes/*/entities/entities/*.lua",
+	"gamemodes/*/gamemode/**/*.lua",
+	"gamemodes/*/entities/effects/**/*.lua",
+	"gamemodes/*/entities/weapons/**/*.lua",
+	"gamemodes/*/entities/entities/**/*.lua",
 	"gamemodes/*/backgrounds/*.png",
 	"gamemodes/*/backgrounds/*.jpg",
 	"gamemodes/*/backgrounds/*.jpeg",
-	"gamemodes/*/content/models/*.mdl",
-	"gamemodes/*/content/models/*.vtx",
-	"gamemodes/*/content/models/*.phy",
-	"gamemodes/*/content/models/*.ani",
-	"gamemodes/*/content/models/*.vvd",
-	"gamemodes/*/content/materials/*.vmt",
-	"gamemodes/*/content/materials/*.vtf",
-	"gamemodes/*/content/materials/*.png",
-	"gamemodes/*/content/materials/*.jpg",
-	"gamemodes/*/content/materials/*.jpeg",
-	"gamemodes/*/content/scenes/*.vcd",
-	"gamemodes/*/content/particles/*.pcf",
+	"gamemodes/*/content/models/**/*.mdl",
+	"gamemodes/*/content/models/**/*.vtx",
+	"gamemodes/*/content/models/**/*.phy",
+	"gamemodes/*/content/models/**/*.ani",
+	"gamemodes/*/content/models/**/*.vvd",
+	"gamemodes/*/content/materials/**/*.vmt",
+	"gamemodes/*/content/materials/**/*.vtf",
+	"gamemodes/*/content/materials/**/*.png",
+	"gamemodes/*/content/materials/**/*.jpg",
+	"gamemodes/*/content/materials/**/*.jpeg",
+	"gamemodes/*/content/scenes/**/*.vcd",
+	"gamemodes/*/content/particles/**/*.pcf",
 	"gamemodes/*/content/resource/fonts/*.ttf",
 	"gamemodes/*/content/scripts/vehicles/*.txt",
 	"gamemodes/*/content/resource/localization/*/*.properties",
@@ -65,22 +65,20 @@ const WILDCARDS = [
 	"gamemodes/*/content/maps/*.nav",
 	"gamemodes/*/content/maps/*.ain",
 	"gamemodes/*/content/maps/thumb/*.png",
-	"gamemodes/*/content/sound/*.wav",
-	"gamemodes/*/content/sound/*.mp3",
-	"gamemodes/*/content/sound/*.ogg",
+	"gamemodes/*/content/sound/**/*.wav",
+	"gamemodes/*/content/sound/**/*.mp3",
+	"gamemodes/*/content/sound/**/*.ogg",
 ];
 
 function getFilePaths(dirPath, exceptionWildcards) {
 	let ret = [];
 	for (const wildcard of WILDCARDS) {
-		const completeWildcard = path.join(dirPath, wildcard);
+		const completeWildcard = path.join(dirPath, wildcard).replace(/\\/g,"/");
 		const filePaths = glob.sync(completeWildcard, {
-			cwd: __dirname.replace(/\\/g, "/"),
 			ignore: exceptionWildcards,
-			absolute: true,
+			nodir: true,
 		});
 
-		console.log(filePaths);
 		ret = ret.concat(filePaths);
 	}
 
@@ -205,8 +203,8 @@ function createGMA(path, title, description, filePaths) {
 
 try {
 	const token = getInput("steam-token");
-	const workshopId = /*"1182471500";*/ getInput("workshop-id");
-	const addonPath = /*"easychat"; */ getInput("addon-path");
+	const workshopId = getInput("workshop-id");
+	const addonPath = getInput("addon-path");
 
 	const metadataPath = path.join(addonPath, "addon.json");
 	if (!fs.existsSync(metadataPath)) {
@@ -220,13 +218,10 @@ try {
 	const filePaths = getFilePaths(addonPath, metadata.ignore);
 	validateFiles(filePaths);
 
-	console.log(filePaths);
-
 	createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
 
-	greenworks.init();
-	greenworks.updatePublishedWorkshopFile(workshopId, GMA_PATH, "", metadata.title, metadata.description,
-		() => setOutput("error-code", 0), (err) => setFailed(err.message));
+	/*greenworks.updatePublishedWorkshopFile(workshopId, GMA_PATH, "", metadata.title, metadata.description,
+		() => setOutput("error-code", 0), (err) => setFailed(err.message));*/
 } catch (error) {
 	console.error(error);
 	setFailed(error.message);
