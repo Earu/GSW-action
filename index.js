@@ -106,7 +106,7 @@ function validateMetadata(metadata) {
 	for (const prop of props) {
 		const val = metadata[prop];
 		if (!val || val.length === 0) {
-			throw new Error(`missing or empty property \'${val}\' in addon.json`);
+			throw new Error(`missing or empty property \'${prop}\' in addon.json`);
 		}
 	}
 
