@@ -1,5 +1,7 @@
-name: 'GSW'
+name: 'Gmod Steam Workshop'
 description: 'Publishes a Garrys Mod addon to the Steam Workshop'
+color: orange
+icon: upload-cloud
 inputs:
   steam-token:
     description: 'The Steam token needed to authenticate'
