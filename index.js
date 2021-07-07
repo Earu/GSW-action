@@ -1,4 +1,4 @@
-const { getInput, setFailed } = require("@actions/core");
+const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
 //const greenworks = require("greenworks");
 const fs = require("fs");
@@ -233,6 +233,8 @@ async function run() {
 
 try {
 	run();
+	setOutput("error-code", 0);
 } catch (error) {
 	setFailed(error.message);
+	setOutput("error-code", 1);
 }
