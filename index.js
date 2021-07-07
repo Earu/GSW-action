@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 
+const MAX_WORKSHOP_SIZE = 400000000;
 const GMA_PATH = "addon.gma";
 const IDENT = "GMAD";
 const VERSION = "3";
@@ -72,17 +73,18 @@ const WILDCARDS = [
 function getFilePaths(dirPath, exceptionWildcards) {
 	let ret = [];
 	for (const wildcard of WILDCARDS) {
-		const filePaths = glob.sync(path.join(dirPath, wildcard));
+		const completeWildcard = path.join(dirPath, wildcard);
+		const filePaths = glob.sync(completeWildcard, {
+			cwd: __dirname.replace(/\\/g, "/"),
+			ignore: exceptionWildcards,
+			absolute: true,
+		});
+
+		console.log(filePaths);
 		ret = ret.concat(filePaths);
 	}
 
-	let exceptions = [];
-	for (const wildcard of exceptionWildcards) {
-		const filePaths = glob.sync(path.join(dirPath, wildcard));
-		exceptions = exceptions.concat(filePaths);
-	}
-
-	return ret.filter((val) => exceptions.indexOf(val) === -1);
+	return ret;
 }
 
 function validateFiles(filePaths) {
@@ -141,25 +143,26 @@ function buildDescription(metadata) {
 }
 
 function createGMA(path, title, description, filePaths) {
-	let buffer = new Buffer();
+	let buffer = Buffer.alloc(MAX_WORKSHOP_SIZE);
+	let offset = 0;
 
 	// Header (5)
-	buffer.write(IDENT); // Ident (4)
-	buffer.write(VERSION); // Version (1)
+	offset += buffer.write(IDENT); // Ident (4)
+	offset += buffer.write(VERSION); // Version (1)
 	// SteamID (8) [unused]
-	buffer.writeBigUInt64BE(0);
+	offset += buffer.writeBigUInt64BE(BigInt(0));
 	// UNIX TimeStamp (8)
-	buffer.writeBigUInt64BE(Date.now() / 1000);
+	offset += buffer.writeBigUInt64BE(BigInt(Math.round(Date.now() / 1000)));
 	// Required content (a list of strings)
-	buffer.write("\0"); // signifies nothing
+	offset += buffer.write("\0"); // signifies nothing
 	// Addon Name (n)
-	buffer.write(title);
+	offset += buffer.write(title);
 	// Addon Description (n)
-	buffer.write(description);
+	offset += buffer.write(description);
 	// Addon Author (n) [unused]
-	buffer.write("Author Name");
+	offset += buffer.write("Author Name");
 	// Addon Version (4) [unused]
-	buffer.writeInt32BE(1);
+	offset += buffer.writeInt32BE(1);
 
 	console.log("Writing file list...");
 
@@ -171,43 +174,39 @@ function createGMA(path, title, description, filePaths) {
 		}
 
 		fileNum++;
-		buffer.writeUInt32BE(fileNum); // File number (4)
-		buffer.write(filePath.toLowerCase()); // File name (all lower case!) (n)
-		buffer.writeBigInt64BE(fileStats.size); // File size (8)
+		offset += buffer.writeUInt32BE(fileNum); // File number (4)
+		offset += buffer.write(filePath.toLowerCase()); // File name (all lower case!) (n)
+		offset += buffer.writeBigInt64BE(BigInt(fileStats.size)); // File size (8)
 
-		buffer.writeUInt32BE(0);
+		offset += buffer.writeUInt32BE(0);
 	}
 
 	// Zero to signify end of files
 	fileNum  = 0;
-	buffer.writeUInt32BE(fileNum);
+	offset += buffer.writeUInt32BE(fileNum);
 
 	console.log("Writing files...");
 
 	for (const filePath of filePaths) {
 		const fileBuffer = fs.readFileSync(filePath);
-		if (fileBuffer.byteLength === 0) {
+		if (fileBuffer.length === 0) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
 
-		const before = fileBuffer.byteLength;
 		buffer = Buffer.concat([buffer, fileBuffer]);
-		const diff = buffer.byteLength - before;
-		if (diff < 1) {
-			throw new Error(`Failed ton write ${filePath}!`);
-		}
+		offset += fileBuffer.length;
 	}
 
-	buffer.writeUInt32BE(0);
+	offset += buffer.writeUInt32BE(0);
 
 	console.log("Writing GMA...");
-	fs.writeFileSync(path, buffer);
+	fs.writeFileSync(path, buffer.slice(0, offset));
 }
 
 try {
 	const token = getInput("steam-token");
-	const workshopId = getInput("workshop-id");
-	const addonPath = getInput("addon-path");
+	const workshopId = /*"1182471500";*/ getInput("workshop-id");
+	const addonPath = /*"easychat"; */ getInput("addon-path");
 
 	const metadataPath = path.join(addonPath, "addon.json");
 	if (!fs.existsSync(metadataPath)) {
@@ -221,15 +220,14 @@ try {
 	const filePaths = getFilePaths(addonPath, metadata.ignore);
 	validateFiles(filePaths);
 
-	console.log(context);
-	console.log(metadata);
 	console.log(filePaths);
 
 	createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
 
 	greenworks.init();
-	greenworks.updatePublishedWorkshopFile({ tags: metadata.tags }, workshopId, GMA_PATH, "", metadata.title,
-		metadata.description, () => setOutput("error-code", 0), (err) => setFailed(err.message));
+	greenworks.updatePublishedWorkshopFile(workshopId, GMA_PATH, "", metadata.title, metadata.description,
+		() => setOutput("error-code", 0), (err) => setFailed(err.message));
 } catch (error) {
+	console.error(error);
 	setFailed(error.message);
 }
