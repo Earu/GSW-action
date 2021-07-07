@@ -203,7 +203,7 @@ function createGMA(path, title, description, filePaths) {
 	fs.writeFileSync(path, buffer);
 }
 
-async function run() {
+try {
 	const token = getInput("steam-token");
 	const workshopId = getInput("workshop-id");
 	const addonPath = getInput("addon-path");
@@ -227,13 +227,8 @@ async function run() {
 	createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
 
 	greenworks.init();
-	await new Promise((resolve, reject) => greenworks
-		.updatePublishedWorkshopFile({ tags: metadata.tags }, workshopId, GMA_PATH, "", metadata.title, metadata.description, resolve, reject));
-}
-
-try {
-	run();
-	setOutput("error-code", 0);
+	greenworks.updatePublishedWorkshopFile({ tags: metadata.tags }, workshopId, GMA_PATH, "", metadata.title,
+		metadata.description, () => setOutput("error-code", 0), (err) => setFailed(err.message));
 } catch (error) {
 	setFailed(error.message);
 }
