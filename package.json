@@ -1,0 +1,30 @@
+{
+  "name": "gsw-action",
+  "version": "1.0.0",
+  "description": "A GitHub action that publishes your Garry's Mod addon to the Steam Workshop",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Earu/GSW-action.git"
+  },
+  "keywords": [
+    "steam;workshop;github;action"
+  ],
+  "author": "Earu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Earu/GSW-action/issues"
+  },
+  "homepage": "https://github.com/Earu/GSW-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "@actions/github": "^5.0.0",
+    "fs": "*",
+    "glob": "^7.1.7",
+    "greenworks": "^0.1.0",
+    "path": "^0.12.7"
+  }
+}
