@@ -1,12 +1,15 @@
-const { getInput, setOutput, setFailed } = require("@actions/core");
+const { getInput, setFailed } = require("@actions/core");
 const { context } = require("@actions/github");
 //const greenworks = require("greenworks");
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 
+const GMA_PATH = "addon.gma";
 const IDENT = "GMAD";
 const VERSION = "3";
+const TYPES = [ "gamemode", "map", "weapon", "vehicle", "npc", "entity", "tool", "effects", "model", "servercontent" ];
+const TAGS = [ "fun", "roleplay", "scenic", "movie", "realism", "cartoon", "water", "comic", "build" ];
 const WILDCARDS = [
 	"lua/*.lua",
 	"scenes/*.vcd",
@@ -89,19 +92,18 @@ function validateFiles(filePaths) {
 	}
 }
 
-/*
-{
+/*{
 	"title"		:	"My Server Content",
 	"type"		:	"ServerContent",
 	"tags"		:	[ "roleplay", "realism" ], // needs at least 1 tag, so our check works regardless
-	"ignore"	: 
+	"ignore"	:
 	[
 		"*.psd",
 		"*.vcproj",
 		"*.svn*"
 	]
 }*/
-const props = ["title","type","description", "tags"];
+const props = ["title", "type", "tags"];
 function validateMetadata(metadata) {
 	for (const prop of props) {
 		const val = metadata[prop];
@@ -113,9 +115,31 @@ function validateMetadata(metadata) {
 	if (!metadata.ignore) {
 		throw new Error("missing property 'ignore' in addon.json");
 	}
+
+	if (!TYPES.find(metadata.type)) {
+		throw new Error(`invalid type: ${metadata.type}`);
+	}
+
+	for (const tag of metadata.tags) {
+		if (!TAGS.find(tag)) {
+			throw new Error(`invalid tag: ${tag}`);
+		}
+	}
+
+	if (!metadata.description) {
+		metadata.description = "";
+	}
 }
 
-function createGMA(metadata, filePaths) {
+function buildDescription(metadata) {
+	return JSON.stringify({
+		description: metadata.description,
+		type: metadata.type,
+		tags: metadata.tags,
+	});
+}
+
+function createGMA(path, title, description, filePaths) {
 	let buffer = new Buffer();
 
 	// Header (5)
@@ -128,15 +152,16 @@ function createGMA(metadata, filePaths) {
 	// Required content (a list of strings)
 	buffer.write("\0"); // signifies nothing
 	// Addon Name (n)
-	buffer.write(metadata.title);
+	buffer.write(title);
 	// Addon Description (n)
-	buffer.write(metadata.description);
+	buffer.write(description);
 	// Addon Author (n) [unused]
 	buffer.write("Author Name");
 	// Addon Version (4) [unused]
 	buffer.writeInt32BE(1);
 
 	console.log("Writing file list...");
+
 	let fileNum = 0;
 	for (const filePath of filePaths) {
 		const fileStats = fs.statSync(filePath);
@@ -174,11 +199,11 @@ function createGMA(metadata, filePaths) {
 
 	buffer.writeUInt32BE(0);
 
-	fs.writeFileSync("./addon.gma", buffer);
+	console.log("Writing GMA...");
+	fs.writeFileSync(path, buffer);
 }
 
-try {
-	// get the steam token provided in the action environment
+async function run() {
 	const token = getInput("steam-token");
 	const workshopId = getInput("workshop-id");
 	const addonPath = getInput("addon-path");
@@ -195,20 +220,19 @@ try {
 	const filePaths = getFilePaths(addonPath, metadata.ignore);
 	validateFiles(filePaths);
 
-	createGMA(metadata, filePaths);
-
 	console.log(context);
 	console.log(metadata);
 	console.log(filePaths);
 
-	/*greenworks.init();
-	greenworks.ugcPublishUpdate(workshopId, "addon.gma", metadata.title,
-		metadata.description, image_name, success_callback, (err) => {
-			setFailed(err);
-		},
-		console.log);*/
+	createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
 
-	setOutput("error-code", 0);
+	greenworks.init();
+	await new Promise((resolve, reject) => greenworks
+		.updatePublishedWorkshopFile({ tags: metadata.tags }, workshopId, GMA_PATH, "", metadata.title, metadata.description, resolve, reject));
+}
+
+try {
+	run();
 } catch (error) {
 	setFailed(error.message);
 }
