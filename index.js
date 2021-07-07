@@ -87,7 +87,7 @@ function getFilePaths(dirPath, exceptionWildcards) {
 
 function validateFiles(filePaths) {
 	for (const filePath of filePaths) {
-		if (filePath === filePath.toLower()) continue;
+		if (filePath === filePath.toLowerCase()) continue;
 		throw new Error(`${filePath} is not lower-cased!`);
 	}
 }
@@ -116,12 +116,13 @@ function validateMetadata(metadata) {
 		throw new Error("missing property 'ignore' in addon.json");
 	}
 
-	if (!TYPES.find(t => t === metadata.type.toLower())) {
+	"awd".toLowerCase()
+	if (!TYPES.find(t => t === metadata.type.toLowerCase())) {
 		throw new Error(`invalid type: ${metadata.type}`);
 	}
 
 	for (const tag of metadata.tags) {
-		if (!TAGS.find(t => t === tag.toLower())) {
+		if (!TAGS.find(t => t === tag.toLowerCase())) {
 			throw new Error(`invalid tag: ${tag}`);
 		}
 	}
@@ -134,8 +135,8 @@ function validateMetadata(metadata) {
 function buildDescription(metadata) {
 	return JSON.stringify({
 		description: metadata.description,
-		type: metadata.type.toLower(),
-		tags: metadata.tags.map(t => t.toLower()),
+		type: metadata.type.toLowerCase(),
+		tags: metadata.tags.map(t => t.toLowerCase()),
 	});
 }
 
@@ -171,7 +172,7 @@ function createGMA(path, title, description, filePaths) {
 
 		fileNum++;
 		buffer.writeUInt32BE(fileNum); // File number (4)
-		buffer.write(filePath.toLower()); // File name (all lower case!) (n)
+		buffer.write(filePath.toLowerCase()); // File name (all lower case!) (n)
 		buffer.writeBigInt64BE(fileStats.size); // File size (8)
 
 		buffer.writeUInt32BE(0);
