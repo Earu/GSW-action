@@ -85,10 +85,8 @@ function getFilePaths(dirPath, exceptionWildcards) {
 function validateFiles(filePaths) {
 	for (const filePath of filePaths) {
 		if (filePath === filePath.toLower()) continue;
-		return false;
+		throw new Error(`${filePath} is not lower-cased!`);
 	}
-
-	return true;
 }
 
 /*
@@ -195,15 +193,13 @@ try {
 	validateMetadata(metadata);
 
 	const filePaths = getFilePaths(addonPath, metadata.ignore);
-	if (!validateFiles(filePaths)) {
-		setFailed("incorrect paths, all paths must be lower-cased!");
-		return;
-	}
+	validateFiles(filePaths);
 
 	createGMA(metadata, filePaths);
 
-	console.log(metadata);
 	console.log(context);
+	console.log(metadata);
+	console.log(filePaths);
 
 	/*greenworks.init();
 	greenworks.ugcPublishUpdate(workshopId, "addon.gma", metadata.title,
