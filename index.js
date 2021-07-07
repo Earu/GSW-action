@@ -116,12 +116,12 @@ function validateMetadata(metadata) {
 		throw new Error("missing property 'ignore' in addon.json");
 	}
 
-	if (!TYPES.find(t => t === metadata.type)) {
+	if (!TYPES.find(t => t === metadata.type.toLower())) {
 		throw new Error(`invalid type: ${metadata.type}`);
 	}
 
 	for (const tag of metadata.tags) {
-		if (!TAGS.find(t => t === tag)) {
+		if (!TAGS.find(t => t === tag.toLower())) {
 			throw new Error(`invalid tag: ${tag}`);
 		}
 	}
@@ -134,8 +134,8 @@ function validateMetadata(metadata) {
 function buildDescription(metadata) {
 	return JSON.stringify({
 		description: metadata.description,
-		type: metadata.type,
-		tags: metadata.tags,
+		type: metadata.type.toLower(),
+		tags: metadata.tags.map(t => t.toLower()),
 	});
 }
 
