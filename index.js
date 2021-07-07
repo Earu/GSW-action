@@ -123,8 +123,8 @@ function createGMA(metadata, filePaths) {
 	buffer.write(VERSION); // Version (1)
 	// SteamID (8) [unused]
 	buffer.writeBigUInt64BE(0);
-	// TimeStamp (8)
-	buffer.writeBigUInt64BE(Date.now());
+	// UNIX TimeStamp (8)
+	buffer.writeBigUInt64BE(Date.now() / 1000);
 	// Required content (a list of strings)
 	buffer.write("\0"); // signifies nothing
 	// Addon Name (n)
