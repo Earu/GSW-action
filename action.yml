@@ -15,8 +15,6 @@ inputs:
     required: false
     default: './'
 outputs:
-  error-code:
-    description: 'The resulting error code of the process'
 runs:
   using: 'node12'
   main: 'index.js'
