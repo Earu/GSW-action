@@ -205,12 +205,14 @@ function createGMA(path, title, description, filePaths) {
 
 function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
 	const gmodwsPath = path.resolve("gmodws");
-	//fs.chmodSync(gmodwsPath, 7777);
+	fs.chmodSync(gmodwsPath, 0755);
 
+	console.log(accountName, workshopId, gmaPath, changes, accountPassword);
 	exec.exec(gmodwsPath, [accountName, workshopId, path.resolve(gmaPath), changes], {
 		env: {
 			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
 			PATH: process.env.PATH,
+			GMODWS_DEBUG: true,
 		}
 	}).then((errCode) => setOutput(errCode))
 	.catch(err => setFailed(err.message));
@@ -242,8 +244,6 @@ try {
 	}
 
 	publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes);
-
-	setOutput("error-code", 0);
 } catch (error) {
 	console.error(error);
 	setFailed(error.message);
