@@ -1,10 +1,14 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
 const { exec } = require("@actions/exec");
-const { statSync, readFileSync, writeFileSync, existsSync } = require("fs");
-const { join } = require("path");
-const glob = require("glob");
 
+const unzip = require("unzip-stream");
+const fs = require("fs");
+const path = require("path");
+const glob = require("glob");
+const https = require("follow-redirects").https;
+
+const TIMEOUT = 300000;
 const MAX_WORKSHOP_SIZE = 400000000;
 const GMA_PATH = "addon.gma";
 const IDENT = "GMAD";
@@ -73,7 +77,7 @@ const WILDCARDS = [
 function getFilePaths(dirPath, exceptionWildcards) {
 	let ret = [];
 	for (const wildcard of WILDCARDS) {
-		const completeWildcard = join(dirPath, wildcard).replace(/\\/g,"/");
+		const completeWildcard = path.join(dirPath, wildcard).replace(/\\/g,"/");
 		const filePaths = glob.sync(completeWildcard, {
 			ignore: exceptionWildcards,
 			nodir: true,
@@ -166,7 +170,7 @@ function createGMA(path, title, description, filePaths) {
 
 	let fileNum = 0;
 	for (const filePath of filePaths) {
-		const fileStats = statSync(filePath);
+		const fileStats = fs.statSync(filePath);
 		if (fileStats.size <= 0) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
@@ -186,7 +190,7 @@ function createGMA(path, title, description, filePaths) {
 	console.log("Writing files...");
 
 	for (const filePath of filePaths) {
-		const fileBuffer = readFileSync(filePath);
+		const fileBuffer = fs.readFileSync(filePath);
 		if (fileBuffer.length === 0) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
@@ -198,23 +202,68 @@ function createGMA(path, title, description, filePaths) {
 	offset += buffer.writeUInt32BE(0);
 
 	console.log("Writing GMA...");
-	writeFileSync(path, buffer.slice(0, offset));
-	console.log(`Successfully created GMA at ${path}`);
+
+	fs.writeFileSync(path, buffer.slice(0, offset));
+	console.log(`Successfully created GMA`);
 }
 
-async function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	throw new Error("not published, WIP");
+async function publishGMA(accountName, accountPassword, workshopId, relativeGmaPath, changes) {
+	const basePath = path.resolve("./");
+	const gmaPath = path.resolve(basePath, relativeGmaPath);
+	const zipPath = path.resolve(basePath, "gmodws.zip");
+	const binPath = path.resolve(basePath, "gmodws");
 
-	const gmodwsPath = path.resolve("gmodws");
-	fs.chmodSync(gmodwsPath, "0755");
+	console.log("Getting gmodws...");
+	await new Promise((resolve, reject) => {
+		setTimeout(() => reject("Could not get gmodws"), TIMEOUT);
+		https.get("https://github.com/Meachamp/gmodws/releases/latest/download/gmodws.zip", (res) => {
+			const stream = fs.createWriteStream(zipPath);
+			res.pipe(stream);
 
-	await exec(gmodwsPath, [accountName, workshopId, path.resolve(gmaPath), changes], {
-		env: {
-			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
-			PATH: process.env.PATH,
-			GMODWS_DEBUG: true,
-		}
+			stream.on("finish",() => {
+				stream.close();
+				resolve();
+			});
+		})
 	});
+
+	console.log("Extracting gmodws...");
+	const extractedFilePaths = [];
+	await new Promise(resolve => {
+		const stream = fs.createReadStream(zipPath)
+			.pipe(unzip.Parse())
+			.on("entry", (entry) => {
+				const filePath = path.resolve(basePath, entry.path);
+				extractedFilePaths.push(filePath);
+				entry.pipe(fs.createWriteStream(filePath));
+			});
+		stream.on("close", () => resolve())
+	});
+	fs.unlinkSync(zipPath);
+
+	console.log("Launching gmodws...");
+	let error = null;
+	try {
+		fs.chmodSync(binPath, "0755");
+		await exec("gmodws", [accountName, workshopId, gmaPath, changes], {
+			env: {
+				STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
+				PATH: process.env.PATH,
+				GMODWS_DEBUG: true,
+			}
+		});
+	} catch (err) {
+		error = err;
+	} finally {
+		fs.unlinkSync(gmaPath);
+		for (const filePath of extractedFilePaths) {
+			fs.unlinkSync(filePath);
+		}
+	}
+
+	if (error != null) {
+		throw error;
+	}
 }
 
 async function run() {
@@ -224,13 +273,13 @@ async function run() {
 		const workshopId = getInput("workshop-id");
 		const addonPath = getInput("addon-path");
 
-		const metadataPath = join(addonPath, "addon.json");
-		if (!existsSync(metadataPath)) {
+		const metadataPath = path.join(addonPath, "addon.json");
+		if (!fs.existsSync(metadataPath)) {
 			setFailed("missing addon.json!");
 			return;
 		}
 
-		const metadata = JSON.parse(readFileSync(metadataPath));
+		const metadata = JSON.parse(fs.readFileSync(metadataPath));
 		validateMetadata(metadata);
 
 		const filePaths = getFilePaths(addonPath, metadata.ignore);
