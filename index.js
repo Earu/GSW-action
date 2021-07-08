@@ -1,10 +1,9 @@
-import { getInput, setFailed, setOutput } from "@actions/core";
-import { context } from "@actions/github";
-
-import exec from "@actions/exec";
-import { statSync, readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
-import glob from "glob";
+const { getInput, setFailed, setOutput } = require("@actions/core");
+const { context } = require("@actions/github");
+const { exec } = require("@actions/exec");
+const { statSync, readFileSync, writeFileSync, existsSync } = require("fs");
+const { join } = require("path");
+const glob = require("glob");
 
 const MAX_WORKSHOP_SIZE = 400000000;
 const GMA_PATH = "addon.gma";
@@ -209,7 +208,7 @@ async function publishGMA(accountName, accountPassword, workshopId, gmaPath, cha
 	const gmodwsPath = path.resolve("gmodws");
 	fs.chmodSync(gmodwsPath, "0755");
 
-	await exec.exec(gmodwsPath, [accountName, workshopId, path.resolve(gmaPath), changes], {
+	await exec(gmodwsPath, [accountName, workshopId, path.resolve(gmaPath), changes], {
 		env: {
 			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
 			PATH: process.env.PATH,
