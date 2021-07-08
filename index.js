@@ -204,8 +204,7 @@ function createGMA(path, title, description, filePaths) {
 }
 
 async function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	setFailed("not published, WIP");
-	return;
+	throw new Error("not published, WIP");
 
 	const gmodwsPath = path.resolve("gmodws");
 	fs.chmodSync(gmodwsPath, "0755");
