@@ -1,6 +1,6 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
-const { exec } = require("@actions/exec");
+const { spawn } = require("child_process");
 
 const unzip = require("unzip-stream");
 const fs = require("fs");
@@ -245,13 +245,17 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 	let error = null;
 	try {
 		fs.chmodSync(binPath, "0755");
-		await exec("gmodws", [accountName, workshopId, gmaPath, changes], {
+		const proc = spawn(binPath, {
+			argv0: `${accountName} ${workshopId} ${gmaPath} "${changes}"`,
 			env: {
 				STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
 				PATH: process.env.PATH,
 				GMODWS_DEBUG: true,
-			}
+			},
+			timeout: TIMEOUT
 		});
+
+		proc.on("message", (msg) => console.log(msg.toString()));
 	} catch (err) {
 		error = err;
 	} finally {
@@ -271,7 +275,7 @@ async function run() {
 		const accountName = getInput("account-name");
 		const accountPassword = getInput("account-password");
 		const workshopId = getInput("workshop-id");
-		const addonPath = getInput("addon-path");
+		const addonPath = "easychat";//getInput("addon-path");
 
 		const metadataPath = path.join(addonPath, "addon.json");
 		if (!fs.existsSync(metadataPath)) {
