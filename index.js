@@ -205,7 +205,7 @@ function createGMA(path, title, description, filePaths) {
 
 function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
 	const gmodwsPath = path.resolve("gmodws");
-	fs.chmodSync(gmodwsPath, "+x");
+	fs.chmodSync(gmodwsPath, 0755);
 
 	const gmodws = spawn(gmodwsPath, {
 		argv0: `${accountName} ${workshopId} ${path.resolve(gmaPath)} "${changes}"`,
