@@ -26,7 +26,6 @@
     "@actions/github": "^5.0.0",
     "fs": "*",
     "glob": "^7.1.7",
-    "greenworks": "^0.1.0",
     "path": "^0.12.7"
   }
 }
