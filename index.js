@@ -1,10 +1,11 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
-const { spawn } = require("child_process");
+const { spawn, exec } = require("child_process");
 
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
+const { env } = require("process");
 
 const MAX_WORKSHOP_SIZE = 400000000;
 const GMA_PATH = "addon.gma";
@@ -203,11 +204,12 @@ function createGMA(path, title, description, filePaths) {
 	console.log(`Successfully created GMA at ${path}`);
 }
 
-function publishGMA(gmaPath, workshopId, changes) {
-	const args = `update -addon "${path.resolve("..", gmaPath)}" -id "${workshopId}" -changes "${changes}"`;
-	const gmPublish = spawn("gmpublish.exe", {
+function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
+	process.env["STEAM_PASSWORD"] = accountPassword; // necessary for gmodws to work
+
+	const args = `${accountName} ${workshopId} ${path.resolve("..", gmaPath)} "${changes}"`;
+	const gmPublish = spawn("gmodws", {
 		argv0: args,
-		cwd: "bin",
 		timeout: 300000
 	});
 
@@ -216,7 +218,8 @@ function publishGMA(gmaPath, workshopId, changes) {
 }
 
 try {
-	const token = getInput("steam-token");
+	const accountName = getInput("account-name");
+	const accountPassword = getInput("account-password");
 	const workshopId = getInput("workshop-id");
 	const addonPath = getInput("addon-path");
 
@@ -239,7 +242,7 @@ try {
 		changes = context.payload.head_commit.message;
 	}
 
-	publishGMA(GMA_PATH, workshopId, changes);
+	publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes);
 
 	setOutput("error-code", 0);
 } catch (error) {
