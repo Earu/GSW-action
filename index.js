@@ -204,6 +204,8 @@ function createGMA(path, title, description, filePaths) {
 }
 
 function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
+	fs.chmodSync("./gmodws", 0775);
+
 	const res = shell.exec(`./gmodws ${accountName} ${workshopId} ${path.resolve(gmaPath)} "${changes}"`, {
 		timeout: 300000,
 		env: {
