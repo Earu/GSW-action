@@ -1,11 +1,10 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
-const { spawn, exec } = require("child_process");
+const { spawn } = require("child_process");
 
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
-const { env } = require("process");
 
 const MAX_WORKSHOP_SIZE = 400000000;
 const GMA_PATH = "addon.gma";
@@ -205,12 +204,14 @@ function createGMA(path, title, description, filePaths) {
 }
 
 function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	process.env["STEAM_PASSWORD"] = accountPassword; // necessary for gmodws to work
-
 	const args = `${accountName} ${workshopId} ${path.resolve("..", gmaPath)} "${changes}"`;
-	const gmPublish = spawn("gmodws", {
+	const gmPublish = spawn("./gmodws", {
 		argv0: args,
-		timeout: 300000
+		timeout: 300000,
+		env: {
+			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
+			PATH: process.env.PATH,
+		}
 	});
 
 	gmPublish.stdout.pipe(process.stdout);
