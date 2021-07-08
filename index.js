@@ -255,7 +255,8 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 			timeout: TIMEOUT
 		});
 
-		proc.on("message", (msg) => console.log(msg.toString()));
+		proc.stdout.pipe(process.stdout);
+		proc.stderr.pipe(process.stderr);
 	} catch (err) {
 		error = err;
 	} finally {
