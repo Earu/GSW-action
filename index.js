@@ -1,5 +1,6 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
+const { spawn } = require("child_process");
 
 const fs = require("fs");
 const path = require("path");
@@ -199,6 +200,19 @@ function createGMA(path, title, description, filePaths) {
 
 	console.log("Writing GMA...");
 	fs.writeFileSync(path, buffer.slice(0, offset));
+	console.log(`Successfully created GMA at ${path}`);
+}
+
+function publishGMA(gmaPath, workshopId, changes) {
+	const args = `update -addon "${path.resolve("..", gmaPath)}" -id "${workshopId}" -changes "${changes}"`;
+	const gmPublish = spawn("gmpublish.exe", {
+		argv0: args,
+		shell: true, detached: false, windowsHide: true, cwd: "bin", timeout: 300000
+	});
+
+	gmPublish.stdout.pipe(process.stdout);
+	gmPublish.stderr.pipe(process.stderr);
+	//process.stdin.pipe(gmPublish.stdin);
 }
 
 try {
@@ -220,8 +234,14 @@ try {
 
 	createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
 
-	/*greenworks.updatePublishedWorkshopFile(workshopId, GMA_PATH, "", metadata.title, metadata.description,
-		() => setOutput("error-code", 0), (err) => setFailed(err.message));*/
+	let changes = "";
+	if (context.payload.head_commit && context.payload.head_commit.message) {
+		changes = context.payload.head_commit.message;
+	}
+
+	publishGMA(GMA_PATH, workshopId, changes);
+
+	setOutput("error-code", 0);
 } catch (error) {
 	console.error(error);
 	setFailed(error.message);
