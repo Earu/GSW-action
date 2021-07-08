@@ -1,6 +1,5 @@
 import { getInput, setFailed, setOutput } from "@actions/core";
 import { context } from "@actions/github";
-import greenworks from "greenworks";
 
 import exec from "@actions/exec";
 import { statSync, readFileSync, writeFileSync, existsSync } from "fs";
@@ -205,21 +204,19 @@ function createGMA(path, title, description, filePaths) {
 }
 
 async function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	if (!greenworks.init()) {
-		throw new Error("Could not initialize Steam API");
-	}
+	setFailed("not published, WIP");
+	return;
 
-	/*const gmodwsPath = path.resolve("gmodws");
-	fs.chmodSync(gmodwsPath, 0755);
+	const gmodwsPath = path.resolve("gmodws");
+	fs.chmodSync(gmodwsPath, "0755");
 
-	exec.exec(gmodwsPath, [accountName, workshopId, path.resolve(gmaPath), changes], {
+	await exec.exec(gmodwsPath, [accountName, workshopId, path.resolve(gmaPath), changes], {
 		env: {
 			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
 			PATH: process.env.PATH,
 			GMODWS_DEBUG: true,
 		}
-	}).then((errCode) => setOutput(errCode))
-	.catch(err => setFailed(err.message));*/
+	});
 }
 
 async function run() {
