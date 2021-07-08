@@ -2,16 +2,19 @@
 
 ### Usage
 
-This action has 3 parameters so far which are `steam-token`, `workshop-id` and `addon-path`.
+This action has 5 parameters so far which are `account-name`, `account-password`, `workshop-id` and `addon-path`.
 
-- `steam-token` is a required parameter that will allow the action to authenticate to the Steam service and
-push your updates, this parameter is ***required***.
-- `workshop-id` is the Steam handle corresponding to your workshop addon, this parameter is ***required*** to
-be able to update the right addon.
+- `account-name` **[required]** is the Steam account name of the account the action is going to use.
+- `account-password` **[required]** is the Steam password of the account the action is going to use.
+- `workshop-id` **[required]** is the Steam handle corresponding to your workshop addon, this parameter
+is used to update the right addon.
 
-- `addon-path` is an ***optional*** parameter that lets you target which path your addon files are under.
+- `addon-path` *[optional]* lets you target which path your addon files are under.
 
-*Note: This action only works with Windows X64*
+*Note: This uses [gmodws](https://github.com/Meachamp/gmodws) for workshop publishing.*
+
+*Note 2: Because we are in an environment where input is not possible, we can only login to Steam
+without SteamGuard.*
 
 ### Example Action
 ```yml
@@ -26,7 +29,7 @@ on:
 
 jobs:
   publish:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout
@@ -34,9 +37,10 @@ jobs:
 
       # Creates a GMA and publishes it to the Steam Workshop
       - name: Publish to Steam Workshop
-        uses: Earu/GSW-action@V1.6
+        uses: Earu/GSW-action@V1.0
         with:
-          steam-token: ''
+          account-name: ${{secrets.STEAM_NAME}}
+          account-password: ${{secrets.STEAM_PASSWORD}}
           workshop-id: '1182471500'
           addon-path: ${{env.GITHUB_WORKSPACE}}
 ```

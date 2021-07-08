@@ -2,8 +2,12 @@ name: 'Gmod Steam Workshop'
 author: 'Earu'
 description: 'Publishes a Garrys Mod addon to the Steam Workshop'
 inputs:
-  steam-token:
-    description: 'The Steam token needed to authenticate'
+  account-name:
+    description: 'The Steam account name needed to authenticate'
+    required: true
+    default: ''
+  account-password:
+    description: 'The Steam account password needed to authenticate'
     required: true
     default: ''
   workshop-id:
