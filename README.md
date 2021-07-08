@@ -11,6 +11,8 @@ be able to update the right addon.
 
 - `addon-path` is an ***optional*** parameter that lets you target which path your addon files are under.
 
+*Note: This action only works with Windows X64*
+
 ### Example Action
 ```yml
 name: CI
