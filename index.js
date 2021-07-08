@@ -207,12 +207,12 @@ function publishGMA(gmaPath, workshopId, changes) {
 	const args = `update -addon "${path.resolve("..", gmaPath)}" -id "${workshopId}" -changes "${changes}"`;
 	const gmPublish = spawn("gmpublish.exe", {
 		argv0: args,
-		shell: true, detached: false, windowsHide: true, cwd: "bin", timeout: 300000
+		cwd: "bin",
+		timeout: 300000
 	});
 
 	gmPublish.stdout.pipe(process.stdout);
 	gmPublish.stderr.pipe(process.stderr);
-	//process.stdin.pipe(gmPublish.stdin);
 }
 
 try {
