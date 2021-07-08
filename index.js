@@ -204,8 +204,8 @@ function createGMA(path, title, description, filePaths) {
 }
 
 function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	const args = `${accountName} ${workshopId} ${path.resolve("..", gmaPath)} "${changes}"`;
-	const gmPublish = spawn("./gmodws", {
+	const args = `${accountName} ${workshopId} ${path.resolve(gmaPath)} "${changes}"`;
+	const gmodws = spawn(path.resolve("gmodws"), {
 		argv0: args,
 		timeout: 300000,
 		env: {
@@ -214,8 +214,8 @@ function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) 
 		}
 	});
 
-	gmPublish.stdout.pipe(process.stdout);
-	gmPublish.stderr.pipe(process.stderr);
+	gmodws.stdout.pipe(process.stdout);
+	gmodws.stderr.pipe(process.stderr);
 }
 
 try {
