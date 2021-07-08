@@ -1,7 +1,7 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
-const { spawn } = require("child_process");
 
+const shell = require("shelljs");
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
@@ -204,11 +204,7 @@ function createGMA(path, title, description, filePaths) {
 }
 
 function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	const gmodwsPath = path.resolve("gmodws");
-	fs.chmodSync(gmodwsPath, 0755);
-
-	const gmodws = spawn(gmodwsPath, {
-		argv0: `${accountName} ${workshopId} ${path.resolve(gmaPath)} "${changes}"`,
+	const res = shell.exec(`./gmodws ${accountName} ${workshopId} ${path.resolve(gmaPath)} "${changes}"`, {
 		timeout: 300000,
 		env: {
 			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
@@ -216,8 +212,10 @@ function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) 
 		}
 	});
 
-	gmodws.stdout.pipe(process.stdout);
-	gmodws.stderr.pipe(process.stderr);
+	console.log(res.stdout);
+	if (res.code > 0) {
+		throw new Error(res.stderr);
+	}
 }
 
 try {
