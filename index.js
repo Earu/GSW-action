@@ -1,10 +1,11 @@
-const { getInput, setFailed, setOutput } = require("@actions/core");
-const { context } = require("@actions/github");
+import { getInput, setFailed, setOutput } from "@actions/core";
+import { context } from "@actions/github";
+import greenworks from "greenworks";
 
-const exec = require("@actions/exec");
-const fs = require("fs");
-const path = require("path");
-const glob = require("glob");
+import exec from "@actions/exec";
+import { statSync, readFileSync, writeFileSync, existsSync } from "fs";
+import { join } from "path";
+import glob from "glob";
 
 const MAX_WORKSHOP_SIZE = 400000000;
 const GMA_PATH = "addon.gma";
@@ -74,7 +75,7 @@ const WILDCARDS = [
 function getFilePaths(dirPath, exceptionWildcards) {
 	let ret = [];
 	for (const wildcard of WILDCARDS) {
-		const completeWildcard = path.join(dirPath, wildcard).replace(/\\/g,"/");
+		const completeWildcard = join(dirPath, wildcard).replace(/\\/g,"/");
 		const filePaths = glob.sync(completeWildcard, {
 			ignore: exceptionWildcards,
 			nodir: true,
@@ -167,7 +168,7 @@ function createGMA(path, title, description, filePaths) {
 
 	let fileNum = 0;
 	for (const filePath of filePaths) {
-		const fileStats = fs.statSync(filePath);
+		const fileStats = statSync(filePath);
 		if (fileStats.size <= 0) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
@@ -187,7 +188,7 @@ function createGMA(path, title, description, filePaths) {
 	console.log("Writing files...");
 
 	for (const filePath of filePaths) {
-		const fileBuffer = fs.readFileSync(filePath);
+		const fileBuffer = readFileSync(filePath);
 		if (fileBuffer.length === 0) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
@@ -199,15 +200,18 @@ function createGMA(path, title, description, filePaths) {
 	offset += buffer.writeUInt32BE(0);
 
 	console.log("Writing GMA...");
-	fs.writeFileSync(path, buffer.slice(0, offset));
+	writeFileSync(path, buffer.slice(0, offset));
 	console.log(`Successfully created GMA at ${path}`);
 }
 
-function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	const gmodwsPath = path.resolve("gmodws");
+async function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
+	if (!greenworks.init()) {
+		throw new Error("Could not initialize Steam API");
+	}
+
+	/*const gmodwsPath = path.resolve("gmodws");
 	fs.chmodSync(gmodwsPath, 0755);
 
-	console.log(accountName, workshopId, gmaPath, changes, accountPassword);
 	exec.exec(gmodwsPath, [accountName, workshopId, path.resolve(gmaPath), changes], {
 		env: {
 			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
@@ -215,36 +219,41 @@ function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) 
 			GMODWS_DEBUG: true,
 		}
 	}).then((errCode) => setOutput(errCode))
-	.catch(err => setFailed(err.message));
+	.catch(err => setFailed(err.message));*/
 }
 
-try {
-	const accountName = getInput("account-name");
-	const accountPassword = getInput("account-password");
-	const workshopId = getInput("workshop-id");
-	const addonPath = getInput("addon-path");
+async function run() {
+	try {
+		const accountName = getInput("account-name");
+		const accountPassword = getInput("account-password");
+		const workshopId = getInput("workshop-id");
+		const addonPath = getInput("addon-path");
 
-	const metadataPath = path.join(addonPath, "addon.json");
-	if (!fs.existsSync(metadataPath)) {
-		setFailed("missing addon.json!");
-		return;
+		const metadataPath = join(addonPath, "addon.json");
+		if (!existsSync(metadataPath)) {
+			setFailed("missing addon.json!");
+			return;
+		}
+
+		const metadata = JSON.parse(readFileSync(metadataPath));
+		validateMetadata(metadata);
+
+		const filePaths = getFilePaths(addonPath, metadata.ignore);
+		validateFiles(filePaths);
+
+		createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
+
+		let changes = "";
+		if (context.payload.head_commit && context.payload.head_commit.message) {
+			changes = context.payload.head_commit.message;
+		}
+
+		await publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes);
+		setOutput("error-code", 0);
+	} catch (error) {
+		console.error(error);
+		setFailed(error.message);
 	}
-
-	const metadata = JSON.parse(fs.readFileSync(metadataPath));
-	validateMetadata(metadata);
-
-	const filePaths = getFilePaths(addonPath, metadata.ignore);
-	validateFiles(filePaths);
-
-	createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
-
-	let changes = "";
-	if (context.payload.head_commit && context.payload.head_commit.message) {
-		changes = context.payload.head_commit.message;
-	}
-
-	publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes);
-} catch (error) {
-	console.error(error);
-	setFailed(error.message);
 }
+
+run();
