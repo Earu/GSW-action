@@ -204,9 +204,11 @@ function createGMA(path, title, description, filePaths) {
 }
 
 function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes) {
-	const args = `${accountName} ${workshopId} ${path.resolve(gmaPath)} "${changes}"`;
-	const gmodws = spawn(path.resolve("gmodws"), {
-		argv0: args,
+	const gmodwsPath = path.resolve("gmodws");
+	fs.chmodSync(gmodwsPath, "+x");
+
+	const gmodws = spawn(gmodwsPath, {
+		argv0: `${accountName} ${workshopId} ${path.resolve(gmaPath)} "${changes}"`,
 		timeout: 300000,
 		env: {
 			STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
