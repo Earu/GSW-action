@@ -1,6 +1,6 @@
 const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
-const { spawn } = require("child_process");
+const { exec } = require("child_process");
 
 const unzip = require("unzip-stream");
 const fs = require("fs");
@@ -208,55 +208,64 @@ function createGMA(path, title, description, filePaths) {
 }
 
 async function publishGMA(accountName, accountPassword, workshopId, relativeGmaPath, changes) {
+	const extractedFilePaths = [];
 	const basePath = path.resolve("./");
 	const gmaPath = path.resolve(basePath, relativeGmaPath);
 	const zipPath = path.resolve(basePath, "gmodws.zip");
-	const binPath = path.resolve(basePath, "gmodws");
 
-	console.log("Getting gmodws...");
-	await new Promise((resolve, reject) => {
-		setTimeout(() => reject("Could not get gmodws"), TIMEOUT);
-		https.get("https://github.com/Meachamp/gmodws/releases/latest/download/gmodws.zip", (res) => {
-			const stream = fs.createWriteStream(zipPath);
-			res.pipe(stream);
+	let binPath = path.resolve(basePath, "gmodws");
+	if (process.platform === "win32") {
+		binPath += ".exe";
+	}
 
-			stream.on("finish",() => {
-				stream.close();
-				resolve();
-			});
-		})
-	});
+	if (!fs.existsSync(binPath)) {
+		console.log("Getting gmodws...");
+		await new Promise((resolve, reject) => {
+			setTimeout(() => reject("Could not get gmodws"), TIMEOUT);
+			https.get("https://github.com/Meachamp/gmodws/releases/latest/download/gmodws.zip", (res) => {
+				const stream = fs.createWriteStream(zipPath);
+				res.pipe(stream);
 
-	console.log("Extracting gmodws...");
-	const extractedFilePaths = [];
-	await new Promise(resolve => {
-		const stream = fs.createReadStream(zipPath)
-			.pipe(unzip.Parse())
-			.on("entry", (entry) => {
-				const filePath = path.resolve(basePath, entry.path);
-				extractedFilePaths.push(filePath);
-				entry.pipe(fs.createWriteStream(filePath));
-			});
-		stream.on("close", () => resolve())
-	});
-	fs.unlinkSync(zipPath);
+				stream.on("finish",() => {
+					stream.close();
+					resolve();
+				});
+			})
+		});
+
+		console.log("Extracting gmodws...");
+		await new Promise(resolve => {
+			const stream = fs.createReadStream(zipPath)
+				.pipe(unzip.Parse())
+				.on("entry", (entry) => {
+					const filePath = path.resolve(basePath, entry.path);
+					extractedFilePaths.push(filePath);
+					entry.pipe(fs.createWriteStream(filePath));
+				});
+			stream.on("close", () => resolve())
+		});
+		fs.unlinkSync(zipPath);
+	}
 
 	console.log("Launching gmodws...");
 	let error = null;
 	try {
 		fs.chmodSync(binPath, "0755");
-		const proc = spawn(binPath, {
-			argv0: `${accountName} ${workshopId} ${gmaPath} "${changes}"`,
-			env: {
-				STEAM_PASSWORD: accountPassword, // necessary for gmodws to work
-				PATH: process.env.PATH,
-				GMODWS_DEBUG: true,
-			},
-			timeout: TIMEOUT
-		});
 
-		proc.stdout.pipe(process.stdout);
-		proc.stderr.pipe(process.stderr);
+		process.env["STEAM_PASSWORD"] = accountPassword;
+		process.env["GMODWS_DEBUG"] = true;
+		await new Promise((resolve, reject) => {
+			exec(`${binPath} ${accountName} ${workshopId} ${gmaPath} "${changes}"`, (err, stdout, stderr) => {
+				if (err) {
+					reject(err.message);
+					return;
+				}
+
+				console.log(stderr);
+				console.log(stdout);
+				resolve();
+			});
+		});
 	} catch (err) {
 		error = err;
 	} finally {
@@ -276,7 +285,7 @@ async function run() {
 		const accountName = getInput("account-name");
 		const accountPassword = getInput("account-password");
 		const workshopId = getInput("workshop-id");
-		const addonPath = "easychat";//getInput("addon-path");
+		const addonPath = getInput("addon-path");
 
 		const metadataPath = path.join(addonPath, "addon.json");
 		if (!fs.existsSync(metadataPath)) {
