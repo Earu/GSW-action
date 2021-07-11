@@ -152,9 +152,9 @@ function createGMA(path, title, description, filePaths, addonPath) {
 	offset += buffer.write(IDENT, offset); // Ident (4)
 	offset += buffer.write(VERSION, offset + 1); // Version (1)
 	// SteamID (8) [unused]
-	offset = buffer.writeBigUInt64BE(BigInt(0), offset);
+	offset = buffer.writeBigUInt64LE(BigInt(0), offset);
 	// UNIX TimeStamp (8)
-	offset = buffer.writeBigUInt64BE(BigInt(Math.round(Date.now() / 1000)), offset);
+	offset = buffer.writeBigUInt64LE(BigInt(Math.round(Date.now() / 1000)), offset);
 	// Required content (a list of strings)
 	offset += buffer.write("\0", offset); // signifies nothing
 	// Addon Name (n)
@@ -164,7 +164,7 @@ function createGMA(path, title, description, filePaths, addonPath) {
 	// Addon Author (n) [unused]
 	offset += buffer.write("Author Name", offset + 1);
 	// Addon Version (4) [unused]
-	offset = buffer.writeInt32BE(1, offset + 1);
+	offset = buffer.writeInt32LE(1, offset + 1);
 
 	console.log("Writing file list...");
 
@@ -181,16 +181,16 @@ function createGMA(path, title, description, filePaths, addonPath) {
 		}
 
 		fileNum++;
-		offset = buffer.writeUInt32BE(fileNum, fileNum === 1 ? offset + 1 : offset); // File number (4)
+		offset = buffer.writeUInt32LE(fileNum, fileNum === 1 ? offset + 2 : offset); // File number (4)
 		offset += buffer.write(addonFilePath.toLowerCase(), offset); // File name (all lower case!) (n)
-		offset = buffer.writeBigInt64BE(BigInt(fileStats.size), offset + 1); // File size (8)
+		offset = buffer.writeBigInt64LE(BigInt(fileStats.size), offset + 1); // File size (8)
 
-		offset = buffer.writeUInt32BE(0, offset);
+		offset = buffer.writeUInt32LE(0, offset);
 	}
 
 	// Zero to signify end of files
 	fileNum = 0;
-	offset = buffer.writeUInt32BE(fileNum, offset);
+	offset = buffer.writeUInt32LE(fileNum, offset);
 
 	console.log("Writing files...");
 
@@ -200,10 +200,10 @@ function createGMA(path, title, description, filePaths, addonPath) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
 
-		offset += buffer.write(fileBuffer.toString(), offset);
+		offset += fileBuffer.copy(buffer, offset);
 	}
 
-	offset = buffer.writeUInt32BE(0, offset + 1);
+	offset = buffer.writeUInt32LE(0, offset + 1);
 
 	console.log("Writing GMA...");
 
