@@ -144,48 +144,53 @@ function buildDescription(metadata) {
 	});
 }
 
-function createGMA(path, title, description, filePaths) {
-	let buffer = Buffer.alloc(MAX_WORKSHOP_SIZE);
+function createGMA(path, title, description, filePaths, addonPath) {
+	let buffer = Buffer.alloc(MAX_WORKSHOP_SIZE, 0);
 	let offset = 0;
 
 	// Header (5)
-	offset += buffer.write(IDENT); // Ident (4)
-	offset += buffer.write(VERSION); // Version (1)
+	offset += buffer.write(IDENT, offset); // Ident (4)
+	offset += buffer.write(VERSION, offset + 1); // Version (1)
 	// SteamID (8) [unused]
-	offset += buffer.writeBigUInt64BE(BigInt(0));
+	offset = buffer.writeBigUInt64BE(BigInt(0), offset);
 	// UNIX TimeStamp (8)
-	offset += buffer.writeBigUInt64BE(BigInt(Math.round(Date.now() / 1000)));
+	offset = buffer.writeBigUInt64BE(BigInt(Math.round(Date.now() / 1000)), offset);
 	// Required content (a list of strings)
-	offset += buffer.write("\0"); // signifies nothing
+	offset += buffer.write("\0", offset); // signifies nothing
 	// Addon Name (n)
-	offset += buffer.write(title);
+	offset += buffer.write(title, offset + 1);
 	// Addon Description (n)
-	offset += buffer.write(description);
+	offset += buffer.write(description, offset + 1);
 	// Addon Author (n) [unused]
-	offset += buffer.write("Author Name");
+	offset += buffer.write("Author Name", offset + 1);
 	// Addon Version (4) [unused]
-	offset += buffer.writeInt32BE(1);
+	offset = buffer.writeInt32BE(1, offset + 1);
 
 	console.log("Writing file list...");
 
 	let fileNum = 0;
 	for (const filePath of filePaths) {
+		let addonFilePath = filePath;
+		if (addonPath.length > 0) {
+			addonFilePath = filePath.slice(addonPath.length + 1);
+		}
+
 		const fileStats = fs.statSync(filePath);
 		if (fileStats.size <= 0) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
 
 		fileNum++;
-		offset += buffer.writeUInt32BE(fileNum); // File number (4)
-		offset += buffer.write(filePath.toLowerCase()); // File name (all lower case!) (n)
-		offset += buffer.writeBigInt64BE(BigInt(fileStats.size)); // File size (8)
+		offset = buffer.writeUInt32BE(fileNum, fileNum === 1 ? offset + 1 : offset); // File number (4)
+		offset += buffer.write(addonFilePath.toLowerCase(), offset); // File name (all lower case!) (n)
+		offset = buffer.writeBigInt64BE(BigInt(fileStats.size), offset + 1); // File size (8)
 
-		offset += buffer.writeUInt32BE(0);
+		offset = buffer.writeUInt32BE(0, offset);
 	}
 
 	// Zero to signify end of files
-	fileNum  = 0;
-	offset += buffer.writeUInt32BE(fileNum);
+	fileNum = 0;
+	offset = buffer.writeUInt32BE(fileNum, offset);
 
 	console.log("Writing files...");
 
@@ -195,11 +200,10 @@ function createGMA(path, title, description, filePaths) {
 			throw new Error(`${filePath} is empty or we could not get its size!`);
 		}
 
-		buffer = Buffer.concat([buffer, fileBuffer]);
-		offset += fileBuffer.length;
+		offset += buffer.write(fileBuffer.toString(), offset);
 	}
 
-	offset += buffer.writeUInt32BE(0);
+	offset = buffer.writeUInt32BE(0, offset + 1);
 
 	console.log("Writing GMA...");
 
@@ -299,7 +303,7 @@ async function run() {
 		const filePaths = getFilePaths(addonPath, metadata.ignore);
 		validateFiles(filePaths);
 
-		createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths);
+		createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths, addonPath);
 
 		let changes = "";
 		if (context.payload.head_commit && context.payload.head_commit.message) {
