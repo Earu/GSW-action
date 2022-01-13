@@ -5,3 +5,4 @@ logs
 config
 appcache
 steamapps
+GameOverlayRenderer.log
