@@ -10,6 +10,10 @@ inputs:
     description: 'The Steam account password needed to authenticate'
     required: true
     default: ''
+  account-secret:
+    description: 'The Steam shared secret to use if you have 2FA enabled'
+    required: false
+    default: ''
   workshop-id:
     description: 'The Steam ID of the addon on the workshop'
     required: true
