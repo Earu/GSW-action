@@ -2,7 +2,6 @@ const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
 const { exec } = require("child_process");
 
-const clipboard = require("clipboardy");
 const unzip = require("unzip-stream");
 const fs = require("fs");
 const path = require("path");
@@ -273,7 +272,7 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 				});
 			});
 
-			twoFactorCode = clipboard.readSync();
+			twoFactorCode = fs.readFileSync(path.resolve(basePath, "passcode.txt"), "utf8").trim();
 		} catch (err) {
 			error = err;
 		}
