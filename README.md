@@ -6,6 +6,7 @@ This action has 5 parameters so far which are `account-name`, `account-password`
 
 - `account-name` **[required]** is the Steam account name of the account the action is going to use.
 - `account-password` **[required]** is the Steam password of the account the action is going to use.
+- `account-secret` *[optional]* is the Steam shared secret if the account uses 2FA.
 - `workshop-id` **[required]** is the Steam handle corresponding to your workshop addon, this parameter
 is used to update the right addon.
 
