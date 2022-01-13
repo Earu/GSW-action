@@ -12,10 +12,7 @@ is used to update the right addon.
 
 - `addon-path` *[optional]* lets you target which path your addon files are under.
 
-*Note: This uses [gmodws](https://github.com/Meachamp/gmodws) for workshop publishing.*
-
-*Note 2: Because we are in an environment where input is not possible, we can only login to Steam
-without SteamGuard.*
+*Note: This uses [gmodws](https://github.com/Earu/gmodws) for workshop publishing.*
 
 ### Example Action
 ```yml
