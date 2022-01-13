@@ -2,6 +2,7 @@ const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
 const { exec } = require("child_process");
 
+const clipboard = require("clipboardy");
 const unzip = require("unzip-stream");
 const fs = require("fs");
 const path = require("path");
@@ -211,7 +212,7 @@ function createGMA(path, title, description, filePaths, addonPath) {
 	console.log(`Successfully created GMA`);
 }
 
-async function publishGMA(accountName, accountPassword, workshopId, relativeGmaPath, changes) {
+async function publishGMA(accountName, accountPassword, workshopId, relativeGmaPath, changes, accountSecret) {
 	const extractedFilePaths = [];
 	const basePath = path.resolve("./");
 	const gmaPath = path.resolve(basePath, relativeGmaPath);
@@ -251,12 +252,40 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 		fs.unlinkSync(zipPath);
 	}
 
+	let twoFactorCode = null;
+	if (accountSecret) {
+		console.log("Launching steam_guard...");
+		const steamGuardPath = path.resolve(basePath, "steam_guard.exe");
+
+		try {
+			fs.chmodSync(steamGuardPath, "0755");
+
+			await new Promise((resolve, reject) => {
+				exec(`${steamGuardPath} ${accountSecret}`, (err, stdout, stderr) => {
+					if (err) {
+						reject(err.message);
+						return;
+					}
+
+					console.log(stderr);
+					console.log(stdout);
+					resolve();
+				});
+			});
+
+			twoFactorCode = clipboard.readSync();
+		} catch (err) {
+			error = err;
+		}
+	}
+
 	console.log("Launching gmodws...");
 	let error = null;
 	try {
 		fs.chmodSync(binPath, "0755");
 
 		process.env["STEAM_PASSWORD"] = accountPassword;
+		process.env["STEAM_2FA"] = twoFactorCode;
 		process.env["GMODWS_DEBUG"] = true;
 		await new Promise((resolve, reject) => {
 			exec(`${binPath} ${accountName} ${workshopId} ${gmaPath} "${changes}"`, (err, stdout, stderr) => {
@@ -290,6 +319,7 @@ async function run() {
 		const accountPassword = getInput("account-password");
 		const workshopId = getInput("workshop-id");
 		const addonPath = getInput("addon-path");
+		const accountSecret = getInput("account-secret");
 
 		const metadataPath = path.join(addonPath, "addon.json");
 		if (!fs.existsSync(metadataPath)) {
@@ -310,7 +340,7 @@ async function run() {
 			changes = context.payload.head_commit.message;
 		}
 
-		await publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes);
+		await publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes, accountSecret);
 		setOutput("error-code", 0);
 	} catch (error) {
 		console.error(error);
