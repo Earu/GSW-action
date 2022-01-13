@@ -251,6 +251,7 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 		fs.unlinkSync(zipPath);
 	}
 
+	let error = null;
 	let twoFactorCode = null;
 	if (accountSecret) {
 		console.log("Launching steam_guard...");
@@ -279,7 +280,6 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 	}
 
 	console.log("Launching gmodws...");
-	let error = null;
 	try {
 		fs.chmodSync(binPath, "0755");
 
@@ -297,6 +297,8 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 				console.log(stdout);
 				resolve();
 			});
+
+			setTimeout(resolve, 1000 * 60); // 1 minute should be plenty enough
 		});
 	} catch (err) {
 		error = err;
