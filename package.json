@@ -27,8 +27,6 @@
     "follow-redirects": "^1.14.1",
     "fs": "*",
     "glob": "^7.1.7",
-    "https": "^1.0.0",
-    "path": "^0.12.7",
-    "unzip-stream": "^0.3.1"
+    "path": "^0.12.7"
   }
 }
