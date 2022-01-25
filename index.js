@@ -2,13 +2,10 @@ const { getInput, setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
 const { exec } = require("child_process");
 
-const unzip = require("unzip-stream");
 const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
-const https = require("follow-redirects").https;
 
-const TIMEOUT = 300000;
 const MAX_WORKSHOP_SIZE = 400000000;
 const GMA_PATH = "addon.gma";
 const IDENT = "GMAD";
@@ -211,102 +208,57 @@ function createGMA(path, title, description, filePaths, addonPath) {
 	console.log(`Successfully created GMA`);
 }
 
+async function runCmd(cmd) {
+	return new Promise((resolve, reject) => {
+		exec(cmd, (err, stdout, stderr) => {
+			if (err) {
+				reject(err.message);
+				return;
+			}
+
+			console.log(stderr);
+			console.log(stdout);
+			resolve();
+		});
+	});
+}
+
 async function publishGMA(accountName, accountPassword, workshopId, relativeGmaPath, changes, accountSecret) {
-	const extractedFilePaths = [];
 	const basePath = path.resolve("./");
 	const gmaPath = path.resolve(basePath, relativeGmaPath);
-	const zipPath = path.resolve(basePath, "gmodws.zip");
-
-	let binPath = path.resolve(basePath, "gmodws");
-	if (process.platform === "win32") {
-		binPath += ".exe";
-	}
-
-	if (!fs.existsSync(binPath)) {
-		console.log("Getting gmodws...");
-		await new Promise((resolve, reject) => {
-			setTimeout(() => reject("Could not get gmodws"), TIMEOUT);
-			https.get("https://github.com/Meachamp/gmodws/releases/latest/download/gmodws.zip", (res) => {
-				const stream = fs.createWriteStream(zipPath);
-				res.pipe(stream);
-
-				stream.on("finish",() => {
-					stream.close();
-					resolve();
-				});
-			})
-		});
-
-		console.log("Extracting gmodws...");
-		await new Promise(resolve => {
-			const stream = fs.createReadStream(zipPath)
-				.pipe(unzip.Parse())
-				.on("entry", (entry) => {
-					const filePath = path.resolve(basePath, entry.path);
-					extractedFilePaths.push(filePath);
-					entry.pipe(fs.createWriteStream(filePath));
-				});
-			stream.on("close", () => resolve())
-		});
-		fs.unlinkSync(zipPath);
-	}
+	const steamcmdPath = path.resolve(basePath, "steamcmd.exe");
+	const gmpublishPath = path.resolve(basePath, "gmpublish.exe");
+	const steamGuardPath = path.resolve(basePath, "steam_guard.exe");
 
 	let error = null;
 	let twoFactorCode = null;
 	if (accountSecret) {
-		console.log("Launching steam_guard...");
-		const steamGuardPath = path.resolve(basePath, "steam_guard.exe");
+		console.log("Getting Steam 2FA code...");
 
 		try {
 			fs.chmodSync(steamGuardPath, "0755");
-
-			await new Promise((resolve, reject) => {
-				exec(`${steamGuardPath} ${accountSecret}`, (err, stdout, stderr) => {
-					if (err) {
-						reject(err.message);
-						return;
-					}
-
-					console.log(stderr);
-					console.log(stdout);
-					resolve();
-				});
-			});
-
+			await runCmd(`${steamGuardPath} ${accountSecret}`);
 			twoFactorCode = fs.readFileSync(path.resolve(basePath, "passcode.txt"), "utf8").trim();
 		} catch (err) {
 			error = err;
 		}
 	}
 
-	console.log("Launching gmodws...");
 	try {
-		fs.chmodSync(binPath, "0755");
+		fs.chmodSync(steamcmdPath, "0755");
+		fs.chmodSync(gmpublishPath, "0755");
 
-		process.env["STEAM_PASSWORD"] = accountPassword;
-		process.env["STEAM_2FA"] = twoFactorCode;
-		process.env["GMODWS_DEBUG"] = true;
-		await new Promise((resolve, reject) => {
-			exec(`${binPath} ${accountName} ${workshopId} ${gmaPath} "${changes}"`, (err, stdout, stderr) => {
-				if (err) {
-					reject(err.message);
-					return;
-				}
+		let steamCmd = `${steamcmdPath} +login ${accountName} ${accountPassword}`
+		if (twoFactorCode) {
+			steamCmd += ` ${twoFactorCode}`;
+		}
 
-				console.log(stderr);
-				console.log(stdout);
-				resolve();
-			});
-
-			setTimeout(resolve, 1000 * 60); // 1 minute should be plenty enough
-		});
+		await runCmd(steamCmd);
+		await runCmd(`${gmpublishPath} update -addon "${gmaPath}" -id "${workshopId}" -changes "${changes}"`);
 	} catch (err) {
 		error = err;
 	} finally {
 		fs.unlinkSync(gmaPath);
-		for (const filePath of extractedFilePaths) {
-			fs.unlinkSync(filePath);
-		}
 	}
 
 	if (error != null) {
