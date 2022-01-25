@@ -1,6 +1,15 @@
-const { getInput, setFailed, setOutput } = require("@actions/core");
+const DEBUG = true;
+
+const { setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
 const { exec } = require("child_process");
+
+let getInput;
+if (DEBUG) {
+	getInput = require("./debug").getInput;
+} else {
+	getInput = require("@actions/core").getInput;
+}
 
 const fs = require("fs");
 const path = require("path");
@@ -208,17 +217,37 @@ function createGMA(path, title, description, filePaths, addonPath) {
 	console.log(`Successfully created GMA`);
 }
 
-async function runCmd(cmd) {
+async function runCmd(cmd, timeoutTime, onLog) {
+	if (!timeoutTime) timeoutTime = 1000 * 60 * 5; // 5 minutes
+
 	return new Promise((resolve, reject) => {
-		exec(cmd, (err, stdout, stderr) => {
+		const child = exec(cmd, (err, _, stderr) => {
 			if (err) {
+				console.log(stderr);
 				reject(err.message);
 				return;
 			}
 
-			console.log(stderr);
-			console.log(stdout);
 			resolve();
+		});
+
+		const timeout = setTimeout(resolve, timeoutTime);
+		child.stdout.on('data', (data) => {
+			timeout.refresh();
+			console.log(data);
+
+			if (onLog) {
+				onLog(child, data, "stdout");
+			}
+		});
+
+		child.stderr.on('data', (data) => {
+			timeout.refresh();
+			console.error(data);
+
+			if (onLog) {
+				onLog(child, data, "stderr");
+			}
 		});
 	});
 }
@@ -226,9 +255,10 @@ async function runCmd(cmd) {
 async function publishGMA(accountName, accountPassword, workshopId, relativeGmaPath, changes, accountSecret) {
 	const basePath = path.resolve("./");
 	const gmaPath = path.resolve(basePath, relativeGmaPath);
-	const steamcmdPath = path.resolve(basePath, "steamcmd.exe");
+	const steamcmdPath = path.resolve(basePath, "steam", "steamcmd.exe");
 	const gmpublishPath = path.resolve(basePath, "gmpublish.exe");
 	const steamGuardPath = path.resolve(basePath, "steam_guard.exe");
+	const passcodePath = path.resolve(basePath, "passcode.txt");
 
 	let error = null;
 	let twoFactorCode = null;
@@ -238,12 +268,13 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 		try {
 			fs.chmodSync(steamGuardPath, "0755");
 			await runCmd(`${steamGuardPath} ${accountSecret}`);
-			twoFactorCode = fs.readFileSync(path.resolve(basePath, "passcode.txt"), "utf8").trim();
+			twoFactorCode = fs.readFileSync(passcodePath, "utf8").trim();
 		} catch (err) {
 			error = err;
 		}
 	}
 
+	let steamCmdProc = null;
 	try {
 		fs.chmodSync(steamcmdPath, "0755");
 		fs.chmodSync(gmpublishPath, "0755");
@@ -253,12 +284,30 @@ async function publishGMA(accountName, accountPassword, workshopId, relativeGmaP
 			steamCmd += ` ${twoFactorCode}`;
 		}
 
-		await runCmd(steamCmd);
+		let runSteamCmdAgain = false;
+		await runCmd(steamCmd, 5000, (child, data) => {
+			if (data.startsWith("FAILED (Two-factor code mismatch)")) {
+				child.kill();
+				runSteamCmdAgain = true;
+			} else {
+				steamCmdProc = child;
+			}
+		});
+
+		if (runSteamCmdAgain) {
+			await runCmd(steamCmd, 5000, (child) => { steamCmdProc = child; });
+		}
+
 		await runCmd(`${gmpublishPath} update -addon "${gmaPath}" -id "${workshopId}" -changes "${changes}"`);
 	} catch (err) {
 		error = err;
 	} finally {
 		fs.unlinkSync(gmaPath);
+		fs.unlinkSync(passcodePath);
+
+		if (steamCmdProc) {
+			steamCmdProc.kill();
+		}
 	}
 
 	if (error != null) {
@@ -289,15 +338,21 @@ async function run() {
 		createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths, addonPath);
 
 		let changes = "";
-		if (context.payload.head_commit && context.payload.head_commit.message) {
-			changes = context.payload.head_commit.message;
+		if (DEBUG) {
+			changes = "DEBUG MESSAGE";
+		} else {
+			if (context.payload.head_commit && context.payload.head_commit.message) {
+				changes = context.payload.head_commit.message;
+			}
 		}
 
 		await publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes, accountSecret);
 		setOutput("error-code", 0);
+		process.exit(0);
 	} catch (error) {
 		console.error(error);
 		setFailed(error.message);
+		process.exit(1);
 	}
 }
 
