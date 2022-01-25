@@ -6,3 +6,9 @@ config
 appcache
 steamapps
 GameOverlayRenderer.log
+passcode.txt
+
+steam/*
+!steam/steamcmd.exe
+
+debug.js
