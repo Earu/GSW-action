@@ -4,12 +4,8 @@ const { setFailed, setOutput } = require("@actions/core");
 const { context } = require("@actions/github");
 const { exec } = require("child_process");
 
-let getInput;
-if (DEBUG) {
-	getInput = require("./debug").getInput;
-} else {
-	getInput = require("@actions/core").getInput;
-}
+const package = DEBUG ? './debug' : '@actions/core';
+const getInput = require(package).getInput;
 
 const fs = require("fs");
 const path = require("path");
