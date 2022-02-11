@@ -11,7 +11,7 @@ const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 
-const MAX_WORKSHOP_SIZE = 400000000;
+const MAX_WORKSHOP_SIZE = 400000001;
 const GMA_PATH = "addon.gma";
 const IDENT = "GMAD";
 const VERSION = "3";
