@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const runCmd_1 = __importDefault(require("./runCmd"));
+const runCmd_1 = require("./runCmd");
 function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, changes, accountSecret) {
     return __awaiter(this, void 0, void 0, function* () {
         const basePath = path_1.default.resolve("./", "..");
@@ -29,7 +29,7 @@ function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, c
             console.log("Getting Steam 2FA code...");
             try {
                 fs_1.default.chmodSync(steamGuardPath, "0755");
-                yield (0, runCmd_1.default)(`${steamGuardPath} ${accountSecret}`);
+                yield (0, runCmd_1.runCmd)(`${steamGuardPath} ${accountSecret}`);
                 twoFactorCode = fs_1.default.readFileSync(passcodePath, "utf-8").trim();
             }
             catch (e) {
@@ -45,7 +45,7 @@ function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, c
                 steamCmd += ` ${twoFactorCode}`;
             console.log(steamCmd);
             let runSteamAgain = false;
-            yield (0, runCmd_1.default)(steamCmd, 5000, (child, data) => {
+            yield (0, runCmd_1.runCmd)(steamCmd, 20000, (child, data) => {
                 if (data.startsWith("FAILED (Two-factor code mismatch")) {
                     child.kill(9);
                     runSteamAgain = true;
@@ -55,8 +55,12 @@ function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, c
                 }
             });
             if (runSteamAgain)
-                yield (0, runCmd_1.default)(steamCmd, 5000, (c) => { steamCmdProc = c; });
-            yield (0, runCmd_1.default)(`${gmPublishPath} update -addon "${gmaPath}" -id "${workshopId}" -changes "${changes}"`);
+                yield (0, runCmd_1.runCmd)(steamCmd, 20000, (child) => { steamCmdProc = child; });
+            yield (0, runCmd_1.spawnProcess)(gmPublishPath, ["update", "-addon", gmaPath, "-id", workshopId, "-changes", changes], {
+                detached: false,
+                shell: false,
+                cwd: basePath,
+            });
         }
         catch (e) {
             err = e;
