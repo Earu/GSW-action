@@ -9,7 +9,8 @@
   "private": true,
   "scripts": {
     "watch": "NODE_ENV=development node-ts src/index.ts",
-    "compile": "tsc"
+    "compile": "tsc",
+    "start": "tsc & node dist/index.js"
   },
   "devDependencies": {
     "node-ts": "^5.1.2",

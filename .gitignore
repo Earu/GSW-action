@@ -11,4 +11,6 @@ passcode.txt
 steam/*
 !steam/steamcmd.exe
 
+debug.ts
 debug.js
+debug.js.map
