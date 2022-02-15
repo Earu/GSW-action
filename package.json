@@ -1,14 +1,14 @@
 {
   "name": "gsw-action",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A GitHub action that publishes your Garry's Mod addon to the Steam Workshop",
   "main": "dist/index.js",
   "repository": "https://github.com/Earu/GSW-action.git",
   "author": "Earu",
   "license": "MIT",
   "scripts": {
-    "watch": "NODE_ENV=development node-ts src/index.ts",
-    "start": "tsc & cd dist & node index.js"
+    "start": "tsc & cd dist & node index.js",
+    "build": "tsc"
   },
   "devDependencies": {
     "node-ts": "^5.1.2",
