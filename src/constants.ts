@@ -1,5 +1,7 @@
+import path from "path";
+
 export const MAX_WORKSHOP_SIZE = 400000001;
-export const GMA_PATH = "addon.gma";
+export const GMA_PATH = path.resolve("..", "bin", "addon.gma");
 export const IDENT = "GMAD";
 export const VERSION = "3";
 export const TYPES = [

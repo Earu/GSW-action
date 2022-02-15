@@ -15,10 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const runCmd_1 = require("./runCmd");
-function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, changes, accountSecret) {
+function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes, accountSecret) {
     return __awaiter(this, void 0, void 0, function* () {
         const basePath = path_1.default.resolve("./", "..");
-        const gmaPath = path_1.default.resolve(basePath, "dist", relativeGMAPath);
         const steamcmdPath = path_1.default.resolve(basePath, "bin", "steamcmd.exe");
         const gmPublishPath = path_1.default.resolve(basePath, "bin", "gmpublish.exe");
         const steamGuardPath = path_1.default.resolve(basePath, "bin", "steam_guard.exe");
@@ -43,7 +42,6 @@ function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, c
             let steamCmd = `${steamcmdPath} +login ${accountName} ${accountPassword}`;
             if (twoFactorCode)
                 steamCmd += ` ${twoFactorCode}`;
-            console.log(steamCmd);
             let runSteamAgain = false;
             yield (0, runCmd_1.runCmd)(steamCmd, 20000, (child, data) => {
                 if (data.startsWith("FAILED (Two-factor code mismatch")) {
