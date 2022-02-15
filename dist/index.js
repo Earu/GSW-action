@@ -24,7 +24,7 @@ const validateFiles_1 = __importDefault(require("./helpers/validateFiles"));
 const validateMetaData_1 = __importDefault(require("./helpers/validateMetaData"));
 const core_1 = require("@actions/core");
 const debug_1 = __importDefault(require("./debug"));
-const DEBUG = true;
+const DEBUG = false;
 let getParameter = DEBUG ? debug_1.default : core_1.getInput;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
