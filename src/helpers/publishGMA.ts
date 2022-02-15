@@ -2,19 +2,18 @@ import fs from "fs";
 import path from "path";
 import runCmd from "./runCmd";
 
-export default async function publishGMA(accountName:string, accountPassword: string, workshopId: string,
-	relativeGMAPath: string, changes: string, accountSecret: string) {
-	const basePath = path.resolve("./");
-	const gmaPath = path.resolve(basePath, relativeGMAPath);
+export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, relativeGMAPath: string, changes: string, accountSecret: string) {
+	const basePath = path.resolve("./", "..");
+	const gmaPath = path.resolve(basePath, "dist", relativeGMAPath);
 	const steamcmdPath = path.resolve(basePath, "bin", "steamcmd.exe");
 	const gmPublishPath = path.resolve(basePath, "bin", "gmpublish.exe");
 	const steamGuardPath = path.resolve(basePath, "bin", "steam_guard.exe");
-	const passcodePath = path.resolve(basePath, "passcode.txt");
+	const passcodePath = path.resolve(basePath, "bin", "passcode.txt");
 
 	let err = null;
 	let twoFactorCode = null;
 	if (accountSecret) {
-		console.log("Getting Steam 2FA code, please be patient...");
+		console.log("Getting Steam 2FA code...");
 
 		try {
 			fs.chmodSync(steamGuardPath, "0755");
@@ -34,27 +33,26 @@ export default async function publishGMA(accountName:string, accountPassword: st
 		let steamCmd = `${steamcmdPath} +login ${accountName} ${accountPassword}`;
 		if (twoFactorCode) steamCmd += ` ${twoFactorCode}`;
 
-		let runSteamAgain = true;
-		await runCmd(steamCmd, 5000, (child: NodeJS.Process, timeout: string) => {
-			if (timeout.startsWith("FAILED (Two-factor code mismatch")) {
-				child.kill(127);
+		console.log(steamCmd);
+		let runSteamAgain = false;
+		await runCmd(steamCmd, 10000, (child: NodeJS.Process, data: string) => {
+			if (data.startsWith("FAILED (Two-factor code mismatch")) {
+				child.kill(9);
 				runSteamAgain = true;
 			} else {
 				steamCmdProc = child;
 			}
 		});
 
-		if (runSteamAgain) await runCmd(steamCmd, 5000, (c: NodeJS.Process) => {steamCmdProc = c;});
-
-		await runCmd(`${gmPublishPath} update -addon "${gmaPath}" -id "${workshopId}" -changes "${changes}"`);
-
+		if (runSteamAgain) await runCmd(steamCmd, 10000, (child: NodeJS.Process) => { steamCmdProc = child; });
+		await runCmd(`${gmPublishPath} update -addon '${gmaPath}' -id '${workshopId}' -changes '${changes}'`);
 	} catch (e) {
 		err = e;
 	} finally {
 		fs.unlinkSync(gmaPath);
 		fs.unlinkSync(passcodePath);
 
-		if (steamCmdProc) steamCmdProc.kill(0);
+		if (steamCmdProc) steamCmdProc.kill(9);
 	}
 
 	if (err !== null) throw new Error(err);
