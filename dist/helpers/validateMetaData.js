@@ -20,4 +20,3 @@ function validateMetadata(metadata) {
     }
 }
 exports.default = validateMetadata;
-//# sourceMappingURL=validateMetaData.js.map

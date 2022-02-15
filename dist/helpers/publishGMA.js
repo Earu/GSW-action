@@ -71,4 +71,3 @@ function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, c
     });
 }
 exports.default = publishGMA;
-//# sourceMappingURL=publishGMA.js.map

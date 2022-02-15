@@ -8,4 +8,3 @@ function validateFiles(filePaths) {
     }
 }
 exports.default = validateFiles;
-//# sourceMappingURL=validateFiles.js.map

@@ -19,4 +19,3 @@ function getFilePaths(dirPath, exceptionWildCards) {
     return ret;
 }
 exports.default = getFilePaths;
-//# sourceMappingURL=getFilePaths.js.map

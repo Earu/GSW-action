@@ -43,4 +43,3 @@ function runCmd(cmd, timeoutTime, onLog) {
     });
 }
 exports.default = runCmd;
-//# sourceMappingURL=runCmd.js.map

@@ -3,16 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const buildDescription_1 = __importDefault(require("helpers/buildDescription"));
+const buildDescription_1 = __importDefault(require("./helpers/buildDescription"));
 const github_1 = require("@actions/github");
-const createGMA_1 = __importDefault(require("helpers/createGMA"));
+const createGMA_1 = __importDefault(require("./helpers/createGMA"));
 const fs_1 = __importDefault(require("fs"));
-const getFilePaths_1 = __importDefault(require("helpers/getFilePaths"));
+const getFilePaths_1 = __importDefault(require("./helpers/getFilePaths"));
 const constants_1 = require("./constants");
 const path_1 = __importDefault(require("path"));
-const publishGMA_1 = __importDefault(require("helpers/publishGMA"));
-const validateFiles_1 = __importDefault(require("helpers/validateFiles"));
-const validateMetaData_1 = __importDefault(require("helpers/validateMetaData"));
+const publishGMA_1 = __importDefault(require("./helpers/publishGMA"));
+const validateFiles_1 = __importDefault(require("./helpers/validateFiles"));
+const validateMetaData_1 = __importDefault(require("./helpers/validateMetaData"));
 const core_1 = require("@actions/core");
 const DEBUG = false;
 const pgk = DEBUG ? './debug' : '@actions/core';
@@ -49,4 +49,3 @@ catch (e) {
     (0, core_1.setFailed)(e);
     process.exit(1);
 }
-//# sourceMappingURL=index.js.map
