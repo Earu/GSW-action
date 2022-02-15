@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WILDCARDS = exports.PROPS = exports.TAGS = exports.TYPES = exports.VERSION = exports.IDENT = exports.GMA_PATH = exports.MAX_WORKSHOP_SIZE = void 0;
 const path_1 = __importDefault(require("path"));
 exports.MAX_WORKSHOP_SIZE = 400000001;
-exports.GMA_PATH = path_1.default.resolve("..", "bin", "addon.gma");
+exports.GMA_PATH = path_1.default.resolve("./", "..", "bin", "addon.gma");
 exports.IDENT = "GMAD";
 exports.VERSION = "3";
 exports.TYPES = [
