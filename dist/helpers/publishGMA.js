@@ -17,16 +17,16 @@ const path_1 = __importDefault(require("path"));
 const runCmd_1 = __importDefault(require("./runCmd"));
 function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, changes, accountSecret) {
     return __awaiter(this, void 0, void 0, function* () {
-        const basePath = path_1.default.resolve("./");
-        const gmaPath = path_1.default.resolve(basePath, relativeGMAPath);
+        const basePath = path_1.default.resolve("./", "..");
+        const gmaPath = path_1.default.resolve(basePath, "dist", relativeGMAPath);
         const steamcmdPath = path_1.default.resolve(basePath, "bin", "steamcmd.exe");
         const gmPublishPath = path_1.default.resolve(basePath, "bin", "gmpublish.exe");
         const steamGuardPath = path_1.default.resolve(basePath, "bin", "steam_guard.exe");
-        const passcodePath = path_1.default.resolve(basePath, "passcode.txt");
+        const passcodePath = path_1.default.resolve(basePath, "bin", "passcode.txt");
         let err = null;
         let twoFactorCode = null;
         if (accountSecret) {
-            console.log("Getting Steam 2FA code, please be patient...");
+            console.log("Getting Steam 2FA code...");
             try {
                 fs_1.default.chmodSync(steamGuardPath, "0755");
                 yield (0, runCmd_1.default)(`${steamGuardPath} ${accountSecret}`);
@@ -43,10 +43,11 @@ function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, c
             let steamCmd = `${steamcmdPath} +login ${accountName} ${accountPassword}`;
             if (twoFactorCode)
                 steamCmd += ` ${twoFactorCode}`;
-            let runSteamAgain = true;
-            yield (0, runCmd_1.default)(steamCmd, 5000, (child, timeout) => {
-                if (timeout.startsWith("FAILED (Two-factor code mismatch")) {
-                    child.kill(127);
+            console.log(steamCmd);
+            let runSteamAgain = false;
+            yield (0, runCmd_1.default)(steamCmd, 5000, (child, data) => {
+                if (data.startsWith("FAILED (Two-factor code mismatch")) {
+                    child.kill(9);
                     runSteamAgain = true;
                 }
                 else {
@@ -64,7 +65,7 @@ function publishGMA(accountName, accountPassword, workshopId, relativeGMAPath, c
             fs_1.default.unlinkSync(gmaPath);
             fs_1.default.unlinkSync(passcodePath);
             if (steamCmdProc)
-                steamCmdProc.kill(0);
+                steamCmdProc.kill(9);
         }
         if (err !== null)
             throw new Error(err);
