@@ -1,6 +1,6 @@
-import { exec } from "child_process";
+import { exec, spawn, SpawnOptionsWithoutStdio, spawnSync } from "child_process";
 
-export default async function runCmd(cmd: string, timeoutTime?: number, onLog?: any): Promise<any>
+export async function runCmd(cmd: string, timeoutTime?: number, onLog?: any): Promise<any>
 {
 	if (!timeoutTime) timeoutTime = 1000 * 60 * 5; // 5 minutes
 
@@ -34,4 +34,12 @@ export default async function runCmd(cmd: string, timeoutTime?: number, onLog?: 
 			}
 		});
 	});
+}
+
+export async function spawnProcess(fileName: string, args: Array<string>, options?: SpawnOptionsWithoutStdio): Promise<any>
+{
+	let res = spawnSync(fileName, args, options);
+	console.log(res.stdout.toString());
+	console.error(res.stderr.toString());
+	console.log(res.status);
 }
