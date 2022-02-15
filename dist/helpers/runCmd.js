@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.spawnProcess = exports.runCmd = void 0;
 const child_process_1 = require("child_process");
 function runCmd(cmd, timeoutTime, onLog) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -41,4 +42,13 @@ function runCmd(cmd, timeoutTime, onLog) {
         });
     });
 }
-exports.default = runCmd;
+exports.runCmd = runCmd;
+function spawnProcess(fileName, args, options) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let res = (0, child_process_1.spawnSync)(fileName, args, options);
+        console.log(res.stdout.toString());
+        console.error(res.stderr.toString());
+        console.log(res.status);
+    });
+}
+exports.spawnProcess = spawnProcess;

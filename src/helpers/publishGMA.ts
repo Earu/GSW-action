@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import runCmd from "./runCmd";
+import { runCmd, spawnProcess } from "./runCmd";
 
 export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, relativeGMAPath: string, changes: string, accountSecret: string) {
 	const basePath = path.resolve("./", "..");
@@ -35,7 +35,7 @@ export default async function publishGMA(accountName: string, accountPassword: s
 
 		console.log(steamCmd);
 		let runSteamAgain = false;
-		await runCmd(steamCmd, 10000, (child: NodeJS.Process, data: string) => {
+		await runCmd(steamCmd, 20000, (child: NodeJS.Process, data: string) => {
 			if (data.startsWith("FAILED (Two-factor code mismatch")) {
 				child.kill(9);
 				runSteamAgain = true;
@@ -44,8 +44,13 @@ export default async function publishGMA(accountName: string, accountPassword: s
 			}
 		});
 
-		if (runSteamAgain) await runCmd(steamCmd, 10000, (child: NodeJS.Process) => { steamCmdProc = child; });
-		await runCmd(`${gmPublishPath} update -addon '${gmaPath}' -id '${workshopId}' -changes '${changes}'`);
+		if (runSteamAgain) await runCmd(steamCmd, 20000, (child: NodeJS.Process) => { steamCmdProc = child; });
+
+		await spawnProcess(gmPublishPath, ["update", "-addon", gmaPath, "-id", workshopId, "-changes", changes], {
+			detached: false,
+			shell: false,
+			cwd: basePath,
+		});
 	} catch (e) {
 		err = e;
 	} finally {
