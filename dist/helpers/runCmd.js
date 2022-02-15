@@ -8,36 +8,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const child_process_1 = __importDefault(require("child_process"));
+const child_process_1 = require("child_process");
 function runCmd(cmd, timeoutTime, onLog) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!timeoutTime)
-            timeoutTime = 1000 * 60 * 5;
+            timeoutTime = 1000 * 60 * 5; // 5 minutes
         return new Promise((resolve, reject) => {
-            const child = child_process_1.default.exec(cmd, (err, stdOut, stdErr) => {
+            const child = (0, child_process_1.exec)(cmd, (err, _, stderr) => {
                 if (err) {
-                    console.log(stdErr);
+                    console.log(stderr);
                     reject(err.message);
                     return;
                 }
-                resolve(stdOut);
-                const timeout = setTimeout(resolve, timeoutTime);
-                child.stdout.on("data", (data) => {
-                    timeout.refresh();
-                    console.log(data);
-                    if (onLog)
-                        onLog(child, data, "stdout");
-                });
-                child.stderr.on("data", (data) => {
-                    timeout.refresh();
-                    console.error(data);
-                    if (onLog)
-                        onLog(child, data, "stderr");
-                });
+                resolve();
+            });
+            const timeout = setTimeout(resolve, timeoutTime);
+            child.stdout.on('data', (data) => {
+                timeout.refresh();
+                console.log(data);
+                if (onLog) {
+                    onLog(child, data, "stdout");
+                }
+            });
+            child.stderr.on('data', (data) => {
+                timeout.refresh();
+                console.error(data);
+                if (onLog) {
+                    onLog(child, data, "stderr");
+                }
             });
         });
     });

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("../constants");
 const fs_1 = __importDefault(require("fs"));
 function createGMA(path, title, description, filePaths, addonPath) {
+    console.log("Creating GMA...");
     const buffer = Buffer.alloc(constants_1.MAX_WORKSHOP_SIZE, 0);
     let offset = 0;
     // Header(5)
@@ -55,6 +56,6 @@ function createGMA(path, title, description, filePaths, addonPath) {
     offset = buffer.writeUInt32LE(0, offset + 1);
     console.log("Writing GMA...");
     fs_1.default.writeFileSync(path, buffer.slice(0, offset));
-    console.log("Successfully written the GMA.");
+    console.log("Done with GMA!");
 }
 exports.default = createGMA;
