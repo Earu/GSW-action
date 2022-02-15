@@ -1,1 +1,0 @@
-{"version":3,"file":"validateFiles.js","sourceRoot":"","sources":["../../src/helpers/validateFiles.ts"],"names":[],"mappings":";;AAAA,SAAwB,aAAa,CAAE,SAAwB;IAC9D,KAAK,MAAM,QAAQ,IAAI,SAAS,EAAE;QACjC,IAAI,QAAQ,KAAK,QAAQ,CAAC,WAAW,EAAE,EAAE;YACxC,MAAM,IAAI,KAAK,CAAE,GAAG,QAAQ,0CAA0C,CAAC,CAAC;SACxE;KACD;AACF,CAAC;AAND,gCAMC"}
