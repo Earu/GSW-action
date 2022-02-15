@@ -2,9 +2,8 @@ import fs from "fs";
 import path from "path";
 import { runCmd, spawnProcess } from "./runCmd";
 
-export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, relativeGMAPath: string, changes: string, accountSecret: string) {
+export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, gmaPath: string, changes: string, accountSecret: string) {
 	const basePath = path.resolve("./", "..");
-	const gmaPath = path.resolve(basePath, "dist", relativeGMAPath);
 	const steamcmdPath = path.resolve(basePath, "bin", "steamcmd.exe");
 	const gmPublishPath = path.resolve(basePath, "bin", "gmpublish.exe");
 	const steamGuardPath = path.resolve(basePath, "bin", "steam_guard.exe");
@@ -33,7 +32,6 @@ export default async function publishGMA(accountName: string, accountPassword: s
 		let steamCmd = `${steamcmdPath} +login ${accountName} ${accountPassword}`;
 		if (twoFactorCode) steamCmd += ` ${twoFactorCode}`;
 
-		console.log(steamCmd);
 		let runSteamAgain = false;
 		await runCmd(steamCmd, 20000, (child: NodeJS.Process, data: string) => {
 			if (data.startsWith("FAILED (Two-factor code mismatch")) {
