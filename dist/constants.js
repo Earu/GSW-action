@@ -77,4 +77,3 @@ exports.WILDCARDS = [
     "gamemodes/*/content/sound/**/*.mp3",
     "gamemodes/*/content/sound/**/*.ogg"
 ];
-//# sourceMappingURL=constants.js.map

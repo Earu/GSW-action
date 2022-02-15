@@ -8,4 +8,3 @@ function buildDescription(metadata) {
     });
 }
 exports.default = buildDescription;
-//# sourceMappingURL=buildDescription.js.map

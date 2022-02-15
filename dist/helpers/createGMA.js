@@ -58,4 +58,3 @@ function createGMA(path, title, description, filePaths, addonPath) {
     console.log("Successfully written the GMA.");
 }
 exports.default = createGMA;
-//# sourceMappingURL=createGMA.js.map

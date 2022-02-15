@@ -1,14 +1,14 @@
 
-import buildDescription from "helpers/buildDescription";
+import buildDescription from "./helpers/buildDescription";
 import { context } from "@actions/github";
-import createGMA from "helpers/createGMA";
+import createGMA from "./helpers/createGMA";
 import fs from "fs";
-import getFilePaths from "helpers/getFilePaths";
+import getFilePaths from "./helpers/getFilePaths";
 import { GMA_PATH } from "./constants";
 import path from "path";
-import publishGMA from "helpers/publishGMA";
-import validateFiles from "helpers/validateFiles";
-import validateMetadata from "helpers/validateMetaData";
+import publishGMA from "./helpers/publishGMA";
+import validateFiles from "./helpers/validateFiles";
+import validateMetadata from "./helpers/validateMetaData";
 import { setFailed, setOutput } from "@actions/core";
 
 const DEBUG = false;
