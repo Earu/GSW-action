@@ -12,7 +12,7 @@ import validateMetadata from "./helpers/validateMetaData";
 import { setFailed, setOutput, getInput, InputOptions } from "@actions/core";
 import getDebugInput from "./debug";
 
-const DEBUG = true;
+const DEBUG = false;
 let getParameter: (input: string, opts?: InputOptions) => string = DEBUG ? getDebugInput : getInput;
 
 async function run() {
