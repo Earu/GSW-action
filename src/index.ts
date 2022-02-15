@@ -9,8 +9,11 @@ import path from "path";
 import publishGMA from "helpers/publishGMA";
 import validateFiles from "helpers/validateFiles";
 import validateMetadata from "helpers/validateMetaData";
-import { getInput, setFailed, setOutput } from "@actions/core";
+import { setFailed, setOutput } from "@actions/core";
 
+const DEBUG = false;
+const pgk = DEBUG ? './debug' : '@actions/core';
+const getInput = require(pgk).getInput;
 
 try {
 	const accountName = getInput("account-name");
@@ -21,8 +24,10 @@ try {
 
 	const metadataPath = path.join(addonPath, "addon.json");
 
-	if (!fs.existsSync(metadataPath))
-		setFailed("missing addon.json!");
+	if (!fs.existsSync(metadataPath)) {
+		setFailed("Missing addon.json!");
+		process.exit(1);
+	}
 
 	const metadata = JSON.parse(fs.readFileSync(metadataPath).toString());
 	validateMetadata(metadata);
@@ -33,9 +38,7 @@ try {
 	createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths, addonPath);
 
 	let changes = "";
-
-	// originally this was a "DEBUG" flag, but its preferable we use the NODE_ENV environment vairable instead.
-	if (process.env.NODE_ENV === "development") {
+	if (DEBUG) {
 		changes = "DEBUG MESSAGE";
 	} else if (context.payload.head_commit && context.payload.head_commit.message) {
 		changes = context.payload.head_commit.message;
