@@ -27,4 +27,4 @@ outputs:
     description: 'The resulting error code from the action'
 runs:
   using: 'node12'
-  main: 'index.js'
+  main: 'dist/index.js'
