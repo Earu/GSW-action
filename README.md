@@ -2,7 +2,7 @@
 
 ### Usage
 
-This action has 6 parameters so far which are `account-name`, `account-password`, `account-secret`, `workshop-id` and `addon-path`.
+This action has 5 parameters so far which are `account-name`, `account-password`, `account-secret`, `workshop-id` and `addon-path`.
 
 - `account-name` **[required]** is the Steam account name of the account the action is going to use.
 - `account-password` **[required]** is the Steam password of the account the action is going to use.
@@ -41,3 +41,14 @@ jobs:
           workshop-id: '1182471500'
           addon-path: ${{env.GITHUB_WORKSPACE}}
 ```
+
+### Debugging / Building / Contribution
+- The project runs with NPM, any PR changing NPM to any other package manager will be denied.
+- To build the project and run it: `npm run start`
+- For customizing the inputs while debugging: change the `debug.ts` file and set the `DEBUG` flag to true in `index.ts`
+- If you're adding new dependencies they must be packaged in the repo for the action to work
+- Follow the indentation and naming conventions already in place
+  - camelCase for variables and functions
+  - BIG_SNAKE_CASE for constants
+  - no variable name thats under 3 characters, unless widely accepted (e.g error => e)
+- Please DEBUG & TEST your code before submitting a PR

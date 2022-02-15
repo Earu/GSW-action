@@ -7,8 +7,12 @@ appcache
 steamapps
 GameOverlayRenderer.log
 passcode.txt
-
-steam/*
-!steam/steamcmd.exe
-
+debug.ts
 debug.js
+debug.js.map
+
+bin/*
+!bin/steamcmd.exe
+!bin/gmpublish.exe
+!bin/steam_guard.exe
+!bin/steam_api.dll
