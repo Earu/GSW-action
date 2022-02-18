@@ -17,8 +17,8 @@ const glob_1 = require("glob");
 const path_1 = __importDefault(require("path"));
 const runCmd_1 = require("./runCmd");
 function findFilePath(pattern) {
-    const root = path_1.default.resolve("./").replace("\\", "/").split("/")[0]; // dont ask questions
-    const matches = glob_1.glob.sync(path_1.default.join(root, pattern), { nodir: true });
+    pattern = path_1.default.join(path_1.default.resolve(__dirname, "..", ".."), pattern);
+    const matches = glob_1.glob.sync(pattern, { nodir: true });
     if (matches.length === 0) {
         throw new Error(`Could not find file matching pattern: ${pattern}`);
     }
