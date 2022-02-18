@@ -4,8 +4,9 @@ import path from "path";
 import { runCmd, spawnProcess } from "./runCmd";
 
 function findFilePath(pattern: string) {
-	const root = path.resolve("./").replace("\\", "/").split("/")[0]; // dont ask questions
-	const matches = glob.sync(path.join(root, pattern), { nodir: true});
+	pattern = path.join(path.resolve(__dirname, "..", ".."), pattern);
+
+	const matches = glob.sync(pattern, { nodir: true});
 	if (matches.length === 0) {
 		throw new Error(`Could not find file matching pattern: ${pattern}`);
 	}
