@@ -1,9 +1,11 @@
 import fs from "fs";
 import { glob } from "glob";
+import path from "path";
 import { runCmd, spawnProcess } from "./runCmd";
 
 function findFilePath(pattern: string) {
-	const matches = glob.sync(pattern, { nodir: true});
+	const root = path.resolve("./").replace("\\", "/").split("/")[0]; // dont ask questions
+	const matches = glob.sync(path.join(root, pattern), { nodir: true});
 	if (matches.length === 0) {
 		throw new Error(`Could not find file matching pattern: ${pattern}`);
 	}
