@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const glob_1 = require("glob");
-const path_1 = __importDefault(require("path"));
 const runCmd_1 = require("./runCmd");
 function findFilePath(pattern) {
     const matches = glob_1.glob.sync(pattern, { nodir: true });
@@ -25,11 +24,11 @@ function findFilePath(pattern) {
 }
 function publishGMA(accountName, accountPassword, workshopId, changes, accountSecret) {
     return __awaiter(this, void 0, void 0, function* () {
+        // can't rely on static paths because github action environment are fucking idiotic
         const gmaPath = findFilePath("**/addon.gma");
-        const basePath = path_1.default.resolve("./", "..");
-        const steamcmdPath = path_1.default.resolve(basePath, "bin", "steamcmd.exe");
-        const gmPublishPath = path_1.default.resolve(basePath, "bin", "gmpublish.exe");
-        const steamGuardPath = path_1.default.resolve(basePath, "bin", "steam_guard.exe");
+        const steamcmdPath = findFilePath("**/steamcmd.exe");
+        const gmPublishPath = findFilePath("**/gmpublish.exe");
+        const steamGuardPath = findFilePath("**/steam_guard.exe");
         let err = null;
         let twoFactorCode = null;
         if (accountSecret) {
@@ -67,7 +66,6 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
             yield (0, runCmd_1.spawnProcess)(gmPublishPath, ["update", "-addon", gmaPath, "-id", workshopId, "-changes", changes], {
                 detached: false,
                 shell: false,
-                cwd: basePath,
             });
         }
         catch (e) {
