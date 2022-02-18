@@ -46,8 +46,6 @@ export default async function publishGMA(accountName: string, accountPassword: s
 		let steamCmd = `${steamcmdPath} +login ${accountName} ${accountPassword}`;
 		if (twoFactorCode) steamCmd += ` ${twoFactorCode}`;
 
-		console.log(`Running steamcmd: ${steamCmd}`);
-
 		let runSteamAgain = false;
 		let proceed = 0;
 		await runCmd(steamCmd, MAX_TIMEOUT / 4, (child: ChildProcess, data: string, _: string) => { // timeout / 4 because the max running time on github is 5 mins
