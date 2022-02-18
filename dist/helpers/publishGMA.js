@@ -13,11 +13,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
+const glob_1 = require("glob");
 const path_1 = __importDefault(require("path"));
 const runCmd_1 = require("./runCmd");
-function publishGMA(accountName, accountPassword, workshopId, gmaPath, changes, accountSecret) {
+function publishGMA(accountName, accountPassword, workshopId, changes, accountSecret) {
     return __awaiter(this, void 0, void 0, function* () {
         const basePath = path_1.default.resolve("./", "..");
+        const gmaPath = glob_1.glob.sync("**/addon.gma", {
+            nodir: true
+        })[0];
+        if (!gmaPath)
+            throw new Error("Could not find addon.gma file!");
+        console.log("Found addon.gma file at: " + gmaPath);
         const steamcmdPath = path_1.default.resolve(basePath, "bin", "steamcmd.exe");
         const gmPublishPath = path_1.default.resolve(basePath, "bin", "gmpublish.exe");
         const steamGuardPath = path_1.default.resolve(basePath, "bin", "steam_guard.exe");
