@@ -35,7 +35,7 @@ async function run() {
 		const filePaths = getFilePaths(addonPath, metadata.ignore);
 		validateFiles(filePaths);
 
-		createGMA(GMA_PATH, metadata.title, buildDescription(metadata), filePaths, addonPath);
+		createGMA(metadata.title, buildDescription(metadata), filePaths, addonPath);
 
 		let changes = "";
 		if (DEBUG) {
@@ -44,7 +44,7 @@ async function run() {
 			changes = context.payload.head_commit.message;
 		}
 
-		await publishGMA(accountName, accountPassword, workshopId, GMA_PATH, changes, accountSecret);
+		await publishGMA(accountName, accountPassword, workshopId, changes, accountSecret);
 		setOutput("error-code", 0);
 		process.exit(0);
 	} catch (e) {
