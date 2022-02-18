@@ -1,6 +1,5 @@
 import fs from "fs";
 import { glob } from "glob";
-import path from "path";
 import { runCmd, spawnProcess } from "./runCmd";
 
 function findFilePath(pattern: string) {
@@ -13,11 +12,11 @@ function findFilePath(pattern: string) {
 }
 
 export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, changes: string, accountSecret: string) {
+	// can't rely on static paths because github action environment are fucking idiotic
 	const gmaPath = findFilePath("**/addon.gma");
-	const basePath = path.resolve("./", "..");
-	const steamcmdPath = path.resolve(basePath, "bin", "steamcmd.exe");
-	const gmPublishPath = path.resolve(basePath, "bin", "gmpublish.exe");
-	const steamGuardPath = path.resolve(basePath, "bin", "steam_guard.exe");
+	const steamcmdPath = findFilePath("**/steamcmd.exe");
+	const gmPublishPath = findFilePath("**/gmpublish.exe");
+	const steamGuardPath = findFilePath("**/steam_guard.exe");
 
 	let err = null;
 	let twoFactorCode = null;
@@ -60,7 +59,6 @@ export default async function publishGMA(accountName: string, accountPassword: s
 		await spawnProcess(gmPublishPath, ["update", "-addon", gmaPath, "-id", workshopId, "-changes", changes], {
 			detached: false,
 			shell: false,
-			cwd: basePath,
 		});
 	} catch (e) {
 		err = e;
