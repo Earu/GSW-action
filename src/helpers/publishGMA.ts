@@ -4,8 +4,6 @@ import path from "path";
 import { runCmd, spawnProcess } from "./runCmd";
 
 function findFilePath(pattern: string) {
-	pattern = path.join(path.resolve(__dirname, "..", ".."), pattern);
-
 	const matches = glob.sync(pattern, { nodir: true});
 	if (matches.length === 0) {
 		throw new Error(`Could not find file matching pattern: ${pattern}`);
@@ -15,11 +13,11 @@ function findFilePath(pattern: string) {
 }
 
 export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, changes: string, accountSecret: string) {
-	// can't rely on static paths because github action environment are fucking idiotic
+	// can't rely on static paths because github action environment are idiotic
 	const gmaPath = findFilePath("**/addon.gma");
-	const steamcmdPath = findFilePath("**/steamcmd.exe");
-	const gmPublishPath = findFilePath("**/gmpublish.exe");
-	const steamGuardPath = findFilePath("**/steam_guard.exe");
+	const steamcmdPath = path.resolve(__dirname, "..", "..", "bin", "steamcmd.exe");
+	const gmPublishPath = path.resolve(__dirname, "..", "..", "bin", "gmpublish.exe");
+	const steamGuardPath = path.resolve(__dirname, "..", "..", "bin", "steam_guard.exe");
 
 	let err = null;
 	let twoFactorCode = null;

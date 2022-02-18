@@ -17,7 +17,6 @@ const glob_1 = require("glob");
 const path_1 = __importDefault(require("path"));
 const runCmd_1 = require("./runCmd");
 function findFilePath(pattern) {
-    pattern = path_1.default.join(path_1.default.resolve(__dirname, "..", ".."), pattern);
     const matches = glob_1.glob.sync(pattern, { nodir: true });
     if (matches.length === 0) {
         throw new Error(`Could not find file matching pattern: ${pattern}`);
@@ -26,11 +25,11 @@ function findFilePath(pattern) {
 }
 function publishGMA(accountName, accountPassword, workshopId, changes, accountSecret) {
     return __awaiter(this, void 0, void 0, function* () {
-        // can't rely on static paths because github action environment are fucking idiotic
+        // can't rely on static paths because github action environment are idiotic
         const gmaPath = findFilePath("**/addon.gma");
-        const steamcmdPath = findFilePath("**/steamcmd.exe");
-        const gmPublishPath = findFilePath("**/gmpublish.exe");
-        const steamGuardPath = findFilePath("**/steam_guard.exe");
+        const steamcmdPath = path_1.default.resolve(__dirname, "..", "..", "bin", "steamcmd.exe");
+        const gmPublishPath = path_1.default.resolve(__dirname, "..", "..", "bin", "gmpublish.exe");
+        const steamGuardPath = path_1.default.resolve(__dirname, "..", "..", "bin", "steam_guard.exe");
         let err = null;
         let twoFactorCode = null;
         if (accountSecret) {
