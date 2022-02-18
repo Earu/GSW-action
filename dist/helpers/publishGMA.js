@@ -14,9 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const glob_1 = require("glob");
+const path_1 = __importDefault(require("path"));
 const runCmd_1 = require("./runCmd");
 function findFilePath(pattern) {
-    const matches = glob_1.glob.sync(pattern, { nodir: true });
+    const root = path_1.default.resolve("./").replace("\\", "/").split("/")[0]; // dont ask questions
+    const matches = glob_1.glob.sync(path_1.default.join(root, pattern), { nodir: true });
     if (matches.length === 0) {
         throw new Error(`Could not find file matching pattern: ${pattern}`);
     }
