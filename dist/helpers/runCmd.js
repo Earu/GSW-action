@@ -11,10 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.spawnProcess = exports.runCmd = void 0;
 const child_process_1 = require("child_process");
-function runCmd(cmd, timeoutTime, onLog) {
+const constants_1 = require("../constants");
+function runCmd(cmd, timeoutTime, onLog, shouldComplete) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!timeoutTime)
-            timeoutTime = 1000 * 60 * 5; // 5 minutes
+            timeoutTime = constants_1.MAX_TIMEOUT; // 5 minutes
         return new Promise((resolve, reject) => {
             const child = (0, child_process_1.exec)(cmd, (err, _, stderr) => {
                 if (err) {
@@ -31,12 +32,20 @@ function runCmd(cmd, timeoutTime, onLog) {
                 if (onLog) {
                     onLog(child, data, "stdout");
                 }
+                if (shouldComplete && shouldComplete(data)) {
+                    clearTimeout(timeout);
+                    resolve();
+                }
             });
             child.stderr.on('data', (data) => {
                 timeout.refresh();
                 console.error(data);
                 if (onLog) {
                     onLog(child, data, "stderr");
+                }
+                if (shouldComplete && shouldComplete(data)) {
+                    clearTimeout(timeout);
+                    resolve();
                 }
             });
         });
