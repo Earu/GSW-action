@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const constants_1 = require("../constants");
 const fs_1 = __importDefault(require("fs"));
 const glob_1 = require("glob");
 const path_1 = __importDefault(require("path"));
@@ -30,6 +31,7 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
         const steamcmdPath = path_1.default.resolve(__dirname, "..", "..", "bin", "steamcmd.exe");
         const gmPublishPath = path_1.default.resolve(__dirname, "..", "..", "bin", "gmpublish.exe");
         const steamGuardPath = path_1.default.resolve(__dirname, "..", "..", "bin", "steam_guard.exe");
+        const passcodePath = path_1.default.resolve(__dirname, "..", "..", "bin", "passcode.txt");
         let err = null;
         let twoFactorCode = null;
         if (accountSecret) {
@@ -37,9 +39,7 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
             try {
                 fs_1.default.chmodSync(steamGuardPath, "0755");
                 yield (0, runCmd_1.runCmd)(`${steamGuardPath} ${accountSecret}`);
-                const passcodePath = findFilePath("**/passcode.txt");
                 twoFactorCode = fs_1.default.readFileSync(passcodePath, "utf-8").trim();
-                fs_1.default.unlinkSync(passcodePath);
             }
             catch (e) {
                 err = e;
@@ -52,8 +52,10 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
             let steamCmd = `${steamcmdPath} +login ${accountName} ${accountPassword}`;
             if (twoFactorCode)
                 steamCmd += ` ${twoFactorCode}`;
+            console.log(`Running steamcmd: ${steamCmd}`);
             let runSteamAgain = false;
-            yield (0, runCmd_1.runCmd)(steamCmd, 20000, (child, data) => {
+            let proceed = 0;
+            yield (0, runCmd_1.runCmd)(steamCmd, constants_1.MAX_TIMEOUT / 4, (child, data, _) => {
                 if (data.startsWith("FAILED (Two-factor code mismatch")) {
                     child.kill(9);
                     runSteamAgain = true;
@@ -61,9 +63,20 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
                 else {
                     steamCmdProc = child;
                 }
+            }, (data) => {
+                if (data.endsWith("OK")) {
+                    proceed++;
+                }
+                return proceed >= 4;
             });
+            proceed = 0;
             if (runSteamAgain)
-                yield (0, runCmd_1.runCmd)(steamCmd, 20000, (child) => { steamCmdProc = child; });
+                yield (0, runCmd_1.runCmd)(steamCmd, constants_1.MAX_TIMEOUT, (child, _, __) => { steamCmdProc = child; }, (data) => {
+                    if (data.endsWith("OK")) {
+                        proceed++;
+                    }
+                    return proceed >= 4;
+                });
             yield (0, runCmd_1.spawnProcess)(gmPublishPath, ["update", "-addon", gmaPath, "-id", workshopId, "-changes", changes], {
                 detached: false,
                 shell: false,
@@ -74,6 +87,7 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
         }
         finally {
             fs_1.default.unlinkSync(gmaPath);
+            fs_1.default.unlinkSync(passcodePath);
             if (steamCmdProc)
                 steamCmdProc.kill(9);
         }

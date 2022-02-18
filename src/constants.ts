@@ -1,4 +1,5 @@
 export const MAX_WORKSHOP_SIZE = 400000001;
+export const MAX_TIMEOUT = 5 * 60 * 1000;
 export const GMA_PATH = "addon.gma";
 export const IDENT = "GMAD";
 export const VERSION = "3";

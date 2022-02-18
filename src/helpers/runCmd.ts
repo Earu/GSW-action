@@ -1,8 +1,9 @@
-import { exec, spawn, SpawnOptionsWithoutStdio, spawnSync } from "child_process";
+import { ChildProcess, exec, SpawnOptionsWithoutStdio, spawnSync } from "child_process";
+import { MAX_TIMEOUT } from "../constants";
 
-export async function runCmd(cmd: string, timeoutTime?: number, onLog?: any): Promise<any>
+export async function runCmd(cmd: string, timeoutTime?: number, onLog?: (child: ChildProcess, data: string, type: string) => void, shouldComplete?: (data: string) => boolean): Promise<any>
 {
-	if (!timeoutTime) timeoutTime = 1000 * 60 * 5; // 5 minutes
+	if (!timeoutTime) timeoutTime = MAX_TIMEOUT; // 5 minutes
 
 	return new Promise<void>((resolve, reject) => {
 		const child = exec(cmd, (err, _, stderr) => {
@@ -23,6 +24,11 @@ export async function runCmd(cmd: string, timeoutTime?: number, onLog?: any): Pr
 			if (onLog) {
 				onLog(child, data, "stdout");
 			}
+
+			if (shouldComplete && shouldComplete(data)) {
+				clearTimeout(timeout);
+				resolve();
+			}
 		});
 
 		child.stderr.on('data', (data) => {
@@ -31,6 +37,11 @@ export async function runCmd(cmd: string, timeoutTime?: number, onLog?: any): Pr
 
 			if (onLog) {
 				onLog(child, data, "stderr");
+			}
+
+			if (shouldComplete && shouldComplete(data)) {
+				clearTimeout(timeout);
+				resolve();
 			}
 		});
 	});
