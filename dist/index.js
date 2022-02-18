@@ -17,14 +17,13 @@ const github_1 = require("@actions/github");
 const createGMA_1 = __importDefault(require("./helpers/createGMA"));
 const fs_1 = __importDefault(require("fs"));
 const getFilePaths_1 = __importDefault(require("./helpers/getFilePaths"));
-const constants_1 = require("./constants");
 const path_1 = __importDefault(require("path"));
 const publishGMA_1 = __importDefault(require("./helpers/publishGMA"));
 const validateFiles_1 = __importDefault(require("./helpers/validateFiles"));
 const validateMetaData_1 = __importDefault(require("./helpers/validateMetaData"));
 const core_1 = require("@actions/core");
 const debug_1 = __importDefault(require("./debug"));
-const DEBUG = false;
+const DEBUG = true;
 let getParameter = DEBUG ? debug_1.default : core_1.getInput;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -43,7 +42,7 @@ function run() {
             (0, validateMetaData_1.default)(metadata);
             const filePaths = (0, getFilePaths_1.default)(addonPath, metadata.ignore);
             (0, validateFiles_1.default)(filePaths);
-            (0, createGMA_1.default)(constants_1.GMA_PATH, metadata.title, (0, buildDescription_1.default)(metadata), filePaths, addonPath);
+            (0, createGMA_1.default)(metadata.title, (0, buildDescription_1.default)(metadata), filePaths, addonPath);
             let changes = "";
             if (DEBUG) {
                 changes = "DEBUG MESSAGE";
@@ -51,7 +50,7 @@ function run() {
             else if (github_1.context.payload.head_commit && github_1.context.payload.head_commit.message) {
                 changes = github_1.context.payload.head_commit.message;
             }
-            yield (0, publishGMA_1.default)(accountName, accountPassword, workshopId, constants_1.GMA_PATH, changes, accountSecret);
+            yield (0, publishGMA_1.default)(accountName, accountPassword, workshopId, changes, accountSecret);
             (0, core_1.setOutput)("error-code", 0);
             process.exit(0);
         }
