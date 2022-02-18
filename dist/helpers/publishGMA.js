@@ -16,19 +16,20 @@ const fs_1 = __importDefault(require("fs"));
 const glob_1 = require("glob");
 const path_1 = __importDefault(require("path"));
 const runCmd_1 = require("./runCmd");
+function findFilePath(pattern) {
+    const matches = glob_1.glob.sync(pattern, { nodir: true });
+    if (matches.length === 0) {
+        throw new Error(`Could not find file matching pattern: ${pattern}`);
+    }
+    return matches[0];
+}
 function publishGMA(accountName, accountPassword, workshopId, changes, accountSecret) {
     return __awaiter(this, void 0, void 0, function* () {
+        const gmaPath = findFilePath("**/addon.gma");
         const basePath = path_1.default.resolve("./", "..");
-        const gmaPath = glob_1.glob.sync("**/addon.gma", {
-            nodir: true
-        })[0];
-        if (!gmaPath)
-            throw new Error("Could not find addon.gma file!");
-        console.log("Found addon.gma file at: " + gmaPath);
         const steamcmdPath = path_1.default.resolve(basePath, "bin", "steamcmd.exe");
         const gmPublishPath = path_1.default.resolve(basePath, "bin", "gmpublish.exe");
         const steamGuardPath = path_1.default.resolve(basePath, "bin", "steam_guard.exe");
-        const passcodePath = path_1.default.resolve(basePath, "bin", "passcode.txt");
         let err = null;
         let twoFactorCode = null;
         if (accountSecret) {
@@ -36,7 +37,9 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
             try {
                 fs_1.default.chmodSync(steamGuardPath, "0755");
                 yield (0, runCmd_1.runCmd)(`${steamGuardPath} ${accountSecret}`);
+                const passcodePath = findFilePath("**/passcode.txt");
                 twoFactorCode = fs_1.default.readFileSync(passcodePath, "utf-8").trim();
+                fs_1.default.unlinkSync(passcodePath);
             }
             catch (e) {
                 err = e;
@@ -72,7 +75,6 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
         }
         finally {
             fs_1.default.unlinkSync(gmaPath);
-            fs_1.default.unlinkSync(passcodePath);
             if (steamCmdProc)
                 steamCmdProc.kill(9);
         }

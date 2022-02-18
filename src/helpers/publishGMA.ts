@@ -3,19 +3,21 @@ import { glob } from "glob";
 import path from "path";
 import { runCmd, spawnProcess } from "./runCmd";
 
+function findFilePath(pattern: string) {
+	const matches = glob.sync(pattern, { nodir: true});
+	if (matches.length === 0) {
+		throw new Error(`Could not find file matching pattern: ${pattern}`);
+	}
+
+	return matches[0];
+}
+
 export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, changes: string, accountSecret: string) {
+	const gmaPath = findFilePath("**/addon.gma");
 	const basePath = path.resolve("./", "..");
-	const gmaPath = glob.sync("**/addon.gma", {
-		nodir: true
-	})[0];
-
-	if (!gmaPath) throw new Error("Could not find addon.gma file!");
-	console.log("Found addon.gma file at: " + gmaPath);
-
 	const steamcmdPath = path.resolve(basePath, "bin", "steamcmd.exe");
 	const gmPublishPath = path.resolve(basePath, "bin", "gmpublish.exe");
 	const steamGuardPath = path.resolve(basePath, "bin", "steam_guard.exe");
-	const passcodePath = path.resolve(basePath, "bin", "passcode.txt");
 
 	let err = null;
 	let twoFactorCode = null;
@@ -26,7 +28,10 @@ export default async function publishGMA(accountName: string, accountPassword: s
 			fs.chmodSync(steamGuardPath, "0755");
 
 			await runCmd(`${steamGuardPath} ${accountSecret}`);
+
+			const passcodePath = findFilePath("**/passcode.txt");
 			twoFactorCode = fs.readFileSync(passcodePath, "utf-8").trim();
+			fs.unlinkSync(passcodePath);
 		} catch (e) {
 			err = e;
 		}
@@ -61,8 +66,6 @@ export default async function publishGMA(accountName: string, accountPassword: s
 		err = e;
 	} finally {
 		fs.unlinkSync(gmaPath);
-		fs.unlinkSync(passcodePath);
-
 		if (steamCmdProc) steamCmdProc.kill(9);
 	}
 
