@@ -1,7 +1,7 @@
-import { IDENT, MAX_WORKSHOP_SIZE, VERSION } from "../constants";
+import { GMA_PATH, IDENT, MAX_WORKSHOP_SIZE, VERSION } from "../constants";
 import fs from "fs";
 
-export default function createGMA(path: string, title: string, description: string, filePaths: Array<string>, addonPath: string) {
+export default function createGMA(title: string, description: string, filePaths: Array<string>, addonPath: string) {
 	console.log("Creating GMA...");
 
 	const buffer = Buffer.alloc(MAX_WORKSHOP_SIZE, 0);
@@ -65,6 +65,6 @@ export default function createGMA(path: string, title: string, description: stri
 
 	console.log("Writing GMA...");
 
-	fs.writeFileSync(path, buffer.slice(0, offset));
+	fs.writeFileSync(GMA_PATH, buffer.slice(0, offset));
 	console.log("Done with GMA!");
 }

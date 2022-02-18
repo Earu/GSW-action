@@ -1,9 +1,17 @@
 import fs from "fs";
+import { glob } from "glob";
 import path from "path";
 import { runCmd, spawnProcess } from "./runCmd";
 
-export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, gmaPath: string, changes: string, accountSecret: string) {
+export default async function publishGMA(accountName: string, accountPassword: string, workshopId: string, changes: string, accountSecret: string) {
 	const basePath = path.resolve("./", "..");
+	const gmaPath = glob.sync("**/addon.gma", {
+		nodir: true
+	})[0];
+
+	if (!gmaPath) throw new Error("Could not find addon.gma file!");
+	console.log("Found addon.gma file at: " + gmaPath);
+
 	const steamcmdPath = path.resolve(basePath, "bin", "steamcmd.exe");
 	const gmPublishPath = path.resolve(basePath, "bin", "gmpublish.exe");
 	const steamGuardPath = path.resolve(basePath, "bin", "steam_guard.exe");
