@@ -39,7 +39,7 @@ function publishGMA(accountName, accountPassword, workshopId, changes, accountSe
 	"changenote" "${changes.replace("\"", "")}"
 	"publishedfileid" "${workshopId}"
 }`);
-        const workshopVdfPath = path_1.default.resolve("workshop.vdf");
+        const workshopVdfPath = path_1.default.resolve(findFilePath("**/workshop.vdf"));
         console.log("Worshop VDF file created at: " + workshopVdfPath);
         let err = null;
         let twoFactorCode = null;
