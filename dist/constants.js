@@ -1,8 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WILDCARDS = exports.PROPS = exports.TAGS = exports.TYPES = exports.VERSION = exports.IDENT = exports.GMA_PATH = exports.MAX_TIMEOUT = exports.MAX_WORKSHOP_SIZE = void 0;
+exports.WILDCARDS = exports.PROPS = exports.TAGS = exports.TYPES = exports.VERSION = exports.IDENT = exports.GMA_PATH = exports.MAX_WORKSHOP_SIZE = void 0;
 exports.MAX_WORKSHOP_SIZE = 400000001;
-exports.MAX_TIMEOUT = 5 * 60 * 1000;
 exports.GMA_PATH = "addon.gma";
 exports.IDENT = "GMAD";
 exports.VERSION = "3";
